@@ -20,3 +20,7 @@ QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 def collection_name(model: str = EMBED_MODEL) -> str:
     """One collection per model, so experiments with other models don't collide."""
     return "vu_" + re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
+
+# Local LLM served by Ollama (https://ollama.com). Small enough for a MacBook Air.
+LLM_MODEL = "qwen2.5:7b"
+OLLAMA_URL = "http://localhost:11434"
