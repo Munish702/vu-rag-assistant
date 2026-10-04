@@ -1,0 +1,258 @@
+{
+  "name": "baseline",
+  "model": "BAAI/bge-small-en-v1.5",
+  "k": 10,
+  "metrics": {
+    "overall": {
+      "n": 13,
+      "recall@1": 0.538,
+      "recall@5": 0.769,
+      "mrr": 0.631
+    },
+    "factoid": {
+      "n": 6,
+      "recall@1": 0.667,
+      "recall@5": 1.0,
+      "mrr": 0.806
+    },
+    "course_lookup": {
+      "n": 5,
+      "recall@1": 0.6,
+      "recall@5": 0.8,
+      "mrr": 0.673
+    },
+    "multi_hop": {
+      "n": 2,
+      "recall@1": 0.0,
+      "recall@5": 0.0,
+      "mrr": 0.0
+    }
+  },
+  "rows": [
+    {
+      "id": "q001",
+      "type": "factoid",
+      "question": "Can I resit an exam I already passed to get a higher grade?",
+      "answerable": true,
+      "rank": 2,
+      "top1_score": 0.722,
+      "top5_ids": [
+        "sg-XM_0178-method-of-assessment",
+        "ter-artificial-intelligence-2026-2027-article-3-5",
+        "sg-AM_1335-method-of-assessment",
+        "sg-XM_0120-method-of-assessment",
+        "sg-X_405065-method-of-assessment"
+      ]
+    },
+    {
+      "id": "q002",
+      "type": "factoid",
+      "question": "Is a final mark of 5.45 a pass?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.743,
+      "top5_ids": [
+        "ter-artificial-intelligence-2026-2027-article-3-6",
+        "sg-XM_0083-method-of-assessment",
+        "sg-AM_1181-method-of-assessment",
+        "sg-E_FIN_AFMI-method-of-assessment",
+        "sg-X_405048-method-of-assessment"
+      ]
+    },
+    {
+      "id": "q003",
+      "type": "factoid",
+      "question": "When am I allowed to start my Master Project AI?",
+      "answerable": true,
+      "rank": 3,
+      "top1_score": 0.79,
+      "top5_ids": [
+        "sg-X_400285-course-content",
+        "ter-artificial-intelligence-2026-2027-article-7-1",
+        "sg-X_400285-entry-requirements",
+        "sg-X_400285-course-objective",
+        "sg-X_400285-explanation-canvas"
+      ]
+    },
+    {
+      "id": "q004",
+      "type": "course_lookup",
+      "question": "How many EC is the Master Project AI?",
+      "answerable": true,
+      "rank": 6,
+      "top1_score": 0.809,
+      "top5_ids": [
+        "sg-X_400285-entry-requirements",
+        "sg-X_400285-course-content",
+        "ter-artificial-intelligence-2026-2027-article-8-1",
+        "sg-X_400285-course-objective",
+        "ter-artificial-intelligence-2026-2027-article-9-1"
+      ]
+    },
+    {
+      "id": "q005",
+      "type": "course_lookup",
+      "question": "Can I redo the Evolutionary Computing programming assignment if I fail it?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.803,
+      "top5_ids": [
+        "sg-X_400111-method-of-assessment",
+        "sg-X_400111-additional-information-teaching-methods",
+        "sg-X_400111-recommended-background-knowledge",
+        "sg-X_400111-course-content",
+        "sg-X_400111-course-objective"
+      ]
+    },
+    {
+      "id": "q006",
+      "type": "course_lookup",
+      "question": "If I pass the Evolutionary Computing exam but fail the assignment, do I lose my exam grade?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.853,
+      "top5_ids": [
+        "sg-X_400111-method-of-assessment",
+        "sg-XM_0179-method-of-assessment-p1",
+        "sg-XM_0179-method-of-assessment-p2",
+        "sg-XM_0090-method-of-assessment",
+        "sg-X_400111-recommended-background-knowledge"
+      ]
+    },
+    {
+      "id": "q007",
+      "type": "course_lookup",
+      "question": "How is Deep Learning graded?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.777,
+      "top5_ids": [
+        "sg-XM_0083-method-of-assessment",
+        "sg-P_NEUMOD_AI-method-of-assessment",
+        "sg-XM_0083-course-content",
+        "sg-XM_0083-course-objective",
+        "sg-L_AAMPLIN024-method-of-assessment"
+      ]
+    },
+    {
+      "id": "q008",
+      "type": "course_lookup",
+      "question": "Who coordinates the Evolutionary Computing course?",
+      "answerable": true,
+      "rank": 5,
+      "top1_score": 0.816,
+      "top5_ids": [
+        "sg-X_400111-course-objective",
+        "sg-X_400111-course-content",
+        "sg-X_400111-additional-information-target-audience",
+        "sg-X_400111-additional-information-teaching-methods",
+        "sg-X_400111-facts"
+      ]
+    },
+    {
+      "id": "q009",
+      "type": "multi_hop",
+      "question": "I already completed Advanced Machine Learning. Can I take Mathematical Foundations of Machine Learning?",
+      "answerable": true,
+      "rank": null,
+      "top1_score": 0.808,
+      "top5_ids": [
+        "sg-XM_0189-course-objective",
+        "sg-XM_0189-course-content",
+        "sg-XM_0189-additional-information",
+        "sg-XM_0189-method-of-assessment",
+        "sg-XM_0061-recommended-background-knowledge"
+      ]
+    },
+    {
+      "id": "q010",
+      "type": "factoid",
+      "question": "What is the deadline to request an extra exam opportunity, and who qualifies?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.741,
+      "top5_ids": [
+        "ter-artificial-intelligence-2026-2027-article-3-5",
+        "ter-artificial-intelligence-2026-2027-article-8-2",
+        "ter-artificial-intelligence-2026-2027-article-7-2-p2",
+        "ter-artificial-intelligence-2026-2027-appendix-ii-p2",
+        "ter-artificial-intelligence-2026-2027-article-1-1"
+      ]
+    },
+    {
+      "id": "q011",
+      "type": "factoid",
+      "question": "How long after an exam can I inspect my graded work?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.78,
+      "top5_ids": [
+        "ter-artificial-intelligence-2026-2027-article-3-9",
+        "ter-artificial-intelligence-2026-2027-article-3-4",
+        "sg-XM_0077-method-of-assessment",
+        "ter-artificial-intelligence-2026-2027-article-3-8",
+        "sg-XM_0120-method-of-assessment"
+      ]
+    },
+    {
+      "id": "q012",
+      "type": "factoid",
+      "question": "How long does an examiner have to grade a written exam?",
+      "answerable": true,
+      "rank": 1,
+      "top1_score": 0.773,
+      "top5_ids": [
+        "ter-artificial-intelligence-2026-2027-article-3-4",
+        "sg-E_FIN_EQF-method-of-assessment",
+        "ter-artificial-intelligence-2026-2027-article-3-9",
+        "sg-XM_0059-method-of-assessment",
+        "sg-X_405065-method-of-assessment"
+      ]
+    },
+    {
+      "id": "q013",
+      "type": "multi_hop",
+      "question": "I have a CS bachelor. Should I take Cognitive Psychology and its Applications or Skills for AI?",
+      "answerable": true,
+      "rank": null,
+      "top1_score": 0.788,
+      "top5_ids": [
+        "sg-XM_40010-additional-information-target-audience",
+        "sg-XM_40010-additional-information",
+        "sg-XM_40010-course-objective",
+        "sg-artificial-intelligence-overview-p3",
+        "sg-XM_40010-course-content"
+      ]
+    },
+    {
+      "id": "q014",
+      "type": "unanswerable",
+      "question": "What is the tuition fee for the AI master?",
+      "answerable": false,
+      "rank": null,
+      "top1_score": 0.703,
+      "top5_ids": [
+        "sg-X_400285-facts",
+        "sg-X_400285-course-content",
+        "sg-X_400285-course-objective",
+        "sg-XMU_0038-facts",
+        "sg-XM_0075-facts"
+      ]
+    },
+    {
+      "id": "q015",
+      "type": "unanswerable",
+      "question": "Where can I park my bike on campus?",
+      "answerable": false,
+      "rank": null,
+      "top1_score": 0.542,
+      "top5_ids": [
+        "sg-XM_0176-custom-course-registration",
+        "sg-X_400111-explanation-canvas",
+        "ter-artificial-intelligence-2026-2027-article-4-2",
+        "sg-AM_470589-explanation-canvas",
+        "sg-XMM_0013-custom-course-registration"
+      ]
+    }
+  ]
+}
