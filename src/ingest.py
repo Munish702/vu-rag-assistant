@@ -107,6 +107,33 @@ def read_study_guide_lines(path: Path) -> list[str]:
     return lines
 
 
+def facts_as_sentences(title: str, code: str, fields: dict) -> str:
+    """Write the course metadata as plain sentences instead of a 'Key: value' form.
+    Embedding models understand sentences much better than forms, and spelling out
+    'EC / ECTS / credits' bridges the vocabulary students actually use."""
+    sentences = []
+    if fields.get("Credits"):
+        sentences.append(f"{title} ({code}) is worth {fields['Credits']} EC "
+                         f"({fields['Credits']} ECTS credits).")
+    if fields.get("Period"):
+        sentences.append(f"It is taught in period {fields['Period']}.")
+    if fields.get("Course Level"):
+        sentences.append(f"It is a level {fields['Course Level']} course.")
+    if fields.get("Language Of Tuition"):
+        sentences.append(f"The course is taught in {fields['Language Of Tuition']}.")
+    if fields.get("Faculty"):
+        sentences.append(f"It is offered by the {fields['Faculty']}.")
+    if fields.get("Course Coordinator"):
+        sentences.append(f"The course coordinator is {fields['Course Coordinator']}.")
+    if fields.get("Examiner"):
+        sentences.append(f"The examiner is {fields['Examiner']}.")
+    if fields.get("Teaching Staff"):
+        sentences.append(f"Teaching staff: {fields['Teaching Staff']}.")
+    if fields.get("Teaching method(s)"):
+        sentences.append(f"Teaching methods: {fields['Teaching method(s)']}.")
+    return "\n".join(sentences)
+
+
 def parse_course(title: str, block: list[str], meta: dict) -> list[dict]:
     # 1) metadata fields (Course Code, Credits, ...)
     fields, i = {}, 0
@@ -132,7 +159,7 @@ def parse_course(title: str, block: list[str], meta: dict) -> list[dict]:
     }
 
     # 2) a "facts" chunk: great for questions like "how many EC is X?"
-    facts = "\n".join(f"{k}: {v}" for k, v in fields.items())
+    facts = facts_as_sentences(title, code, fields)
     chunks = make_chunks(f"{title} ({code}) - Course facts", facts,
                          f"sg-{code}-facts", {**course_meta, "section": "Course facts"})
 
@@ -224,18 +251,72 @@ def read_ter_lines(path: Path) -> list[str]:
     return lines
 
 
+FOOTNOTE = re.compile(r"^\d [A-Z]")  # "1 Students with ..." (paragraphs look like "1. ...")
+BULLET = "- "
+
+
+def split_footnote(body: list[str]) -> tuple[list[str], list[str]]:
+    """Separate a footnote at the end of an article (e.g. under a table) from the rest."""
+    for i, line in enumerate(body):
+        if FOOTNOTE.match(line):
+            return body[:i], body[i:]
+    return body, []
+
+
+def split_bullets(body: list[str]) -> tuple[list[str], list[list[str]], list[str]] | None:
+    """If an article is mainly a list of long bullet items, return
+    (lead_in, items, tail). Returns None when splitting would not help."""
+    first = next((i for i, l in enumerate(body) if l.startswith(BULLET)), None)
+    if first is None:
+        return None
+    lead_in, items, tail = body[:first], [], []
+    for line in body[first:]:
+        if line.startswith(BULLET):
+            items.append([line])
+        elif items and not tail and not items[-1][-1].endswith("."):
+            items[-1].append(line)          # wrapped continuation of the item
+        else:
+            tail.append(line)               # text after the list (e.g. adoption dates)
+    words = [len(" ".join(it).split()) for it in items]
+    # Only split real "smoothie" lists: several long, independent items and a short intro.
+    if len(items) >= 3 and sum(words) / len(words) >= 20 and len(" ".join(lead_in).split()) <= 80:
+        return lead_in, items, tail
+    return None
+
+
 def parse_ter(path: Path, meta: dict) -> list[dict]:
     chunks, section = [], ""
     current, body = None, []  # current = (ref, title)
 
     def flush():
-        if current and body:
-            ref, title = current
-            chunks.extend(make_chunks(
-                f"{meta['programme']} TER {meta['year']} - {ref} {title}", "\n".join(body),
-                f"ter-{slug(meta['programme'])}-{meta['year']}-{slug(ref)}",
-                {**meta, "section": f"{ref} {title}", "ter_section": section,
-                 "article": ref, "article_title": title}))
+        if not (current and body):
+            return
+        ref, title = current
+        header = f"{meta['programme']} TER {meta['year']} - {ref} {title}"
+        base_id = f"ter-{slug(meta['programme'])}-{meta['year']}-{slug(ref)}"
+        art_meta = {**meta, "section": f"{ref} {title}", "ter_section": section,
+                    "article": ref, "article_title": title}
+
+        main, footnote = split_footnote(body) if ref.startswith("Article") else (body, [])
+        bullets = split_bullets(main) if ref.startswith("Article") else None
+
+        if bullets:
+            # One chunk per list item, each repeating the intro for context,
+            # so a single rule isn't diluted by unrelated items (no "smoothie").
+            lead_in, items, tail = bullets
+            intro = "\n".join(lead_in)
+            for n, item in enumerate(items, start=1):
+                chunks.extend(make_chunks(f"{header} - item {n}", intro + "\n" + "\n".join(item),
+                                          f"{base_id}-item{n}", art_meta))
+            if tail:
+                chunks.extend(make_chunks(f"{header} - closing text", "\n".join(tail),
+                                          f"{base_id}-tail", art_meta))
+        else:
+            chunks.extend(make_chunks(header, "\n".join(main), base_id, art_meta))
+
+        if footnote:
+            chunks.extend(make_chunks(f"{header} - footnote", "\n".join(footnote),
+                                      f"{base_id}-footnote", art_meta))
 
     lines = read_ter_lines(path)
     for i, line in enumerate(lines):
