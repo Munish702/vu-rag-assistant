@@ -24,7 +24,7 @@ import time
 from datetime import datetime
 
 from config import EVAL_FILE, LLM_MODEL, ROOT
-from evaluate import matches
+from evaluate import matches, retrieval_settings, settings_line
 from generate import NOT_FOUND, SYSTEM_PROMPT, build_prompt, call_llm
 from retrieve import retrieve
 
@@ -101,7 +101,8 @@ def main():
 
     # ---- report ---------------------------------------------------------
     print(f"\nModel: {LLM_MODEL}   questions: {len(rows)} "
-          f"({len(ans)} answerable, {len(unans)} unanswerable)\n")
+          f"({len(ans)} answerable, {len(unans)} unanswerable)")
+    print(f"Retrieval: {settings_line()}\n")
     print(f"  Abstains on unanswerable        {metrics['abstain_when_unanswerable']:.2f}   (higher is better)")
     print(f"  Wrongly abstains on answerable  {metrics['false_abstain_when_answerable']:.2f}   (lower is better)")
     if metrics["key_fact_coverage"] is not None:
@@ -132,7 +133,7 @@ def main():
     out_dir.mkdir(exist_ok=True)
     out_file = out_dir / f"{datetime.now():%Y%m%d-%H%M}_{args.name}.json"
     with open(out_file, "w", encoding="utf-8") as f:
-        json.dump({"name": args.name, "llm": LLM_MODEL, "k": args.k,
+        json.dump({"name": args.name, "llm": LLM_MODEL, "k": args.k, "retrieval": retrieval_settings(),
                    "metrics": metrics, "rows": rows}, f, indent=2, ensure_ascii=False)
     print(f"\nSaved {out_file.relative_to(ROOT)}")
 

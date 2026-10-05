@@ -26,7 +26,7 @@ from collections import Counter
 from functools import lru_cache
 
 from config import (CANDIDATES, CHUNKS_FILE, EMBED_MODEL, INDEX_DIR, QUERY_PREFIX,
-                    RERANK_MODEL, RETRIEVAL_MODE, RRF_K, collection_name)
+                    RERANK_MODEL, RESERVE_TER_SLOT, RETRIEVAL_MODE, RRF_K, collection_name)
 
 # --------------------------------------------------------------------------
 # Dense retrieval (embeddings + ChromaDB)
@@ -155,6 +155,15 @@ def rerank(query: str, candidates: list[dict]) -> list[dict]:
     return [{**c, "score": float(s)} for s, c in ranked]
 
 
+def reserve_ter_slot(top: list[dict], rest: list[dict]) -> list[dict]:
+    """General rules apply to every student, so make sure at least one is shown:
+    if the top results contain no TER chunk, swap the last one for the best-ranked TER chunk."""
+    if len(top) < 2 or any(h["metadata"].get("doc_type") == "ter" for h in top):
+        return top
+    best_ter = next((h for h in rest if h["metadata"].get("doc_type") == "ter"), None)
+    return top[:-1] + [best_ter] if best_ter else top
+
+
 def retrieve(query: str, k: int = 5, where: dict | None = None, mode: str | None = None) -> list[dict]:
     """Return the k most relevant chunks, best first.
 
@@ -174,7 +183,11 @@ def retrieve(query: str, k: int = 5, where: dict | None = None, mode: str | None
         # BM25 only NOMINATES candidates here; it gets no vote on the final order.
         candidates = merge_candidates(dense_search(query, CANDIDATES, where),
                                       bm25_search(query, CANDIDATES, where))
-        return rerank(query, candidates)[:k]
+        ranked = rerank(query, candidates)
+        top = ranked[:k]
+        if RESERVE_TER_SLOT:
+            top = reserve_ter_slot(top, ranked[k:])
+        return top
     raise ValueError(f"Unknown retrieval mode: {mode}")
 
 

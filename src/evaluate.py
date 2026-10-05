@@ -23,7 +23,7 @@ import statistics
 from collections import defaultdict
 from datetime import datetime
 
-from config import EMBED_MODEL, EVAL_FILE, ROOT
+from config import EMBED_MODEL, EVAL_FILE, RERANK_MODEL, RESERVE_TER_SLOT, RETRIEVAL_MODE, ROOT
 from retrieve import retrieve
 
 
@@ -50,6 +50,19 @@ def metrics(rows: list[dict]) -> dict:
         "recall@5": round(hit_at(5), 3),
         "mrr": round(sum(1 / r["rank"] for r in rows if r["rank"]) / n, 3),
     }
+
+
+def retrieval_settings() -> dict:
+    """Every setting that changes retrieval results - printed and saved with each run,
+    so a forgotten config change can't silently produce a misleading result."""
+    s = {"mode": RETRIEVAL_MODE}
+    if RETRIEVAL_MODE == "rerank":
+        s.update(rerank_model=RERANK_MODEL, reserve_ter_slot=RESERVE_TER_SLOT)
+    return s
+
+
+def settings_line() -> str:
+    return ", ".join(f"{k}={v}" for k, v in retrieval_settings().items())
 
 
 def main():
@@ -80,7 +93,8 @@ def main():
 
     # ---- report ---------------------------------------------------------
     print(f"\nModel: {EMBED_MODEL}   questions: {len(rows)} "
-          f"({len(answerable)} answerable, {len(unanswerable)} unanswerable)\n")
+          f"({len(answerable)} answerable, {len(unanswerable)} unanswerable)")
+    print(f"Retrieval: {settings_line()}\n")
     print(f"{'':<16}{'n':>4}{'R@1':>8}{'R@5':>8}{'MRR':>8}")
     print(f"{'ALL':<16}{overall['n']:>4}{overall['recall@1']:>8.2f}{overall['recall@5']:>8.2f}{overall['mrr']:>8.2f}")
     by_type = defaultdict(list)
@@ -112,6 +126,7 @@ def main():
         json.dump({
             "name": args.name,
             "model": EMBED_MODEL,
+            "retrieval": retrieval_settings(),
             "k": args.k,
             "metrics": {"overall": overall, **{t: metrics(g) for t, g in by_type.items()}},
             "rows": rows,
