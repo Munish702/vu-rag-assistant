@@ -136,17 +136,25 @@ def facts_as_sentences(title: str, code: str, fields: dict) -> str:
 
 def parse_course(title: str, block: list[str], meta: dict) -> list[dict]:
     # 1) metadata fields (Course Code, Credits, ...)
-    fields, i = {}, 0
+    #    Long values wrap over several lines. In the PDF layout the label of a
+    #    multi-line value can sit vertically centred, so a value line may appear
+    #    ABOVE its own bare label (e.g. "Examiner ..." / "<names>" / "Teaching Staff" / "MSc").
+    entries, i = [], 0  # each entry: [field, first_line_value, extra_lines]
     while i < len(block) and block[i] not in SECTION_HEADINGS:
-        for f in COURSE_FIELDS:
-            if block[i].startswith(f):
-                fields[f] = block[i][len(f):].strip()
-                break
-        else:  # a wrapped value (e.g. long Teaching Staff list) -> append
-            if fields:
-                last = list(fields)[-1]
-                fields[last] = (fields[last] + " " + block[i]).strip()
+        line = block[i]
+        field = next((f for f in COURSE_FIELDS if line.startswith(f)), None)
+        if field:
+            value = line[len(field):].strip()
+            if not value and entries:
+                # bare label: the wrapped lines just above belong to THIS field
+                stolen, entries[-1][2] = entries[-1][2], []
+                entries.append([field, "", stolen])
+            else:
+                entries.append([field, value, []])
+        elif entries:
+            entries[-1][2].append(line)  # wrapped continuation line
         i += 1
+    fields = {f: " ".join([v] + extra).strip() for f, v, extra in entries}
 
     code = fields.get("Course Code", "UNKNOWN")
     course_meta = {
@@ -191,12 +199,19 @@ def parse_study_guide(path: Path, meta: dict) -> list[dict]:
     # The table of contents lists full course names; use it to repair titles
     # that wrap over several lines (e.g. "Interdisciplinary Community Service
     # Learning:" / "Addressing Challenges Through Transdisciplinary" / "Research").
-    toc = " ".join(lines[:starts[0]])
+    # Rebuild the full table-of-contents entries: an entry ends with a page number,
+    # and lines without one are wrapped parts of the next entry.
+    toc_entries, buffer = set(), []
+    for line in lines[:starts[0]]:
+        buffer.append(line)
+        if TOC_LINE.search(line):
+            toc_entries.add(TOC_LINE.sub("", " ".join(buffer)).strip())
+            buffer = []
 
     def title_start(code_idx: int) -> int:
-        for n_lines in (3, 2):
-            candidate = " ".join(lines[code_idx - n_lines:code_idx])
-            if candidate in toc:
+        """A course title is the 1-3 lines above 'Course Code' that form a full ToC entry."""
+        for n_lines in (3, 2, 1):
+            if " ".join(lines[code_idx - n_lines:code_idx]) in toc_entries:
                 return code_idx - n_lines
         return code_idx - 1
 
