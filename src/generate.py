@@ -54,7 +54,9 @@ def build_prompt(question: str, hits: list[dict]) -> str:
         f"[{n}] ({scope_label(hit['metadata'])})\n{hit['text']}"
         for n, hit in enumerate(hits, start=1)
     )
-    return f"Sources:\n\n{sources}\n\nQuestion: {question}\nAnswer:"
+    return (f"Sources:\n\n{sources}\n\n"
+            f"Question: {question}\n\n"
+            "Write your answer in 1-4 full sentences, citing sources like [1].")
 
 
 def call_llm(system: str, user: str, model: str = LLM_MODEL) -> str:
@@ -66,7 +68,7 @@ def call_llm(system: str, user: str, model: str = LLM_MODEL) -> str:
             {"role": "user", "content": user},
         ],
         "stream": False,
-        "options": {"temperature": 0},  # no creativity: same question -> same answer
+        "options": {"temperature": 0, "num_ctx": 8192},  # no creativity; room for long prompts
     }
     request = urllib.request.Request(
         f"{OLLAMA_URL}/api/chat",
