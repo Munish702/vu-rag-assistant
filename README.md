@@ -168,3 +168,4 @@ Python · pdfplumber · sentence-transformers · ChromaDB · BM25 (from scratch)
 ---
 
 *Built by Munishwar Pradhan, MSc AI student at VU Amsterdam.* <!-- TODO: add LinkedIn / contact -->
+Background photo: "Amsterdam VU" by Rokus Cornelis, CC BY 3.0, via Wikimedia Commons (modified: faded and blurred).
