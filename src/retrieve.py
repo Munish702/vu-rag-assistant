@@ -1,10 +1,12 @@
 """
 retrieve.py - find the chunks most relevant to a question.
 
-Three modes (default set in config.RETRIEVAL_MODE):
+Four modes (default set in config.RETRIEVAL_MODE):
   dense  : embedding similarity (understands meaning, vague on exact names/codes)
   bm25   : keyword matching    (precise on exact words, no understanding of meaning)
   hybrid : both, combined with Reciprocal Rank Fusion (RRF)
+  rerank : dense + BM25 candidates, re-ordered by a cross-encoder that reads
+           the question and each chunk together
 
 Use it from code:
     from retrieve import retrieve
@@ -24,7 +26,7 @@ from collections import Counter
 from functools import lru_cache
 
 from config import (CANDIDATES, CHUNKS_FILE, EMBED_MODEL, INDEX_DIR, QUERY_PREFIX,
-                    RETRIEVAL_MODE, RRF_K, collection_name)
+                    RERANK_MODEL, RETRIEVAL_MODE, RRF_K, collection_name)
 
 # --------------------------------------------------------------------------
 # Dense retrieval (embeddings + ChromaDB)
@@ -123,12 +125,42 @@ def rrf_fuse(rankings: list[list[dict]], k: int = RRF_K) -> list[dict]:
     return [{**by_id[i], "score": fused[i]} for i in order]
 
 
+# --------------------------------------------------------------------------
+# Reranking with a cross-encoder
+# --------------------------------------------------------------------------
+@lru_cache(maxsize=1)
+def _reranker():
+    from sentence_transformers import CrossEncoder
+    return CrossEncoder(RERANK_MODEL, max_length=512)
+
+
+def merge_candidates(*rankings: list[dict]) -> list[dict]:
+    """Union of several result lists, without duplicates (first occurrence wins)."""
+    seen, merged = set(), []
+    for ranking in rankings:
+        for hit in ranking:
+            if hit["id"] not in seen:
+                seen.add(hit["id"])
+                merged.append(hit)
+    return merged
+
+
+def rerank(query: str, candidates: list[dict]) -> list[dict]:
+    """Score every (question, chunk) pair by reading them TOGETHER, then sort.
+    Slower than dense search, so it only runs on a shortlist."""
+    if not candidates:
+        return []
+    scores = _reranker().predict([(query, c["text"]) for c in candidates], batch_size=16)
+    ranked = sorted(zip(scores, candidates), key=lambda pair: float(pair[0]), reverse=True)
+    return [{**c, "score": float(s)} for s, c in ranked]
+
+
 def retrieve(query: str, k: int = 5, where: dict | None = None, mode: str | None = None) -> list[dict]:
     """Return the k most relevant chunks, best first.
 
     where: optional metadata filter, e.g. {"doc_type": "ter"}.
-    mode : "dense", "bm25" or "hybrid" (default: config.RETRIEVAL_MODE).
-    Note: in hybrid mode 'score' is the RRF score (~0.01-0.03), not cosine similarity.
+    mode : "dense", "bm25", "hybrid" or "rerank" (default: config.RETRIEVAL_MODE).
+    Note: 'score' means something different per mode (cosine, BM25, RRF or reranker score).
     """
     mode = mode or RETRIEVAL_MODE
     if mode == "dense":
@@ -138,6 +170,11 @@ def retrieve(query: str, k: int = 5, where: dict | None = None, mode: str | None
     if mode == "hybrid":
         return rrf_fuse([dense_search(query, CANDIDATES, where),
                          bm25_search(query, CANDIDATES, where)])[:k]
+    if mode == "rerank":
+        # BM25 only NOMINATES candidates here; it gets no vote on the final order.
+        candidates = merge_candidates(dense_search(query, CANDIDATES, where),
+                                      bm25_search(query, CANDIDATES, where))
+        return rerank(query, candidates)[:k]
     raise ValueError(f"Unknown retrieval mode: {mode}")
 
 
@@ -145,7 +182,7 @@ def main():
     parser = argparse.ArgumentParser(description="Search the VU index.")
     parser.add_argument("query", help="your question, in quotes")
     parser.add_argument("--k", type=int, default=5, help="number of results")
-    parser.add_argument("--mode", choices=["dense", "bm25", "hybrid"], help="retrieval mode")
+    parser.add_argument("--mode", choices=["dense", "bm25", "hybrid", "rerank"], help="retrieval mode")
     parser.add_argument("--doc-type", choices=["ter", "study_guide"], help="only search one document type")
     args = parser.parse_args()
 

@@ -22,10 +22,12 @@ def collection_name(model: str = EMBED_MODEL) -> str:
     return "vu_" + re.sub(r"[^a-z0-9]+", "_", model.lower()).strip("_")
 
 # Local LLM served by Ollama (https://ollama.com). Small enough for a MacBook Air.
-LLM_MODEL = "qwen2.5:7b"
+LLM_MODEL = "qwen2.5:7b"    
 OLLAMA_URL = "http://localhost:11434"
 
 # Retrieval: "dense" (embeddings), "bm25" (keywords) or "hybrid" (both, fused with RRF).
 RETRIEVAL_MODE = "dense"
 CANDIDATES = 20   # in hybrid mode, how many results each method contributes before fusing
 RRF_K = 60        # RRF smoothing constant (60 is the standard value from the original paper)
+   # Cross-encoder used in "rerank" mode (~1.1 GB, downloaded on first use).
+RERANK_MODEL = "BAAI/bge-reranker-base"
