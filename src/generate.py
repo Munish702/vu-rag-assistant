@@ -34,7 +34,8 @@ Rules:
 - Include any condition or consequence that changes what the student should do (e.g. which grade counts).
 - Use only facts stated in the sources. Never guess. Ignore irrelevant sources silently.
 - Cite the source number after every claim, e.g. [1] or [2][3].
-- If the sources do not contain the answer, reply exactly: "{NOT_FOUND}"
+- Sources may use different wording than the question. If a source covers the situation, answer from it, even if it needs one step of reasoning.
+- Only if NO source addresses the question, reply exactly: "{NOT_FOUND}"
 - Be concise: 1-4 sentences, addressed to the student ("you")."""
 
 
