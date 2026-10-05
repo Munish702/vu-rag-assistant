@@ -4,3 +4,4 @@ __pycache__/
 data/raw/*.pdf
 data/processed/
 data/index/
+data/feedback.jsonl

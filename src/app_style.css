@@ -22,8 +22,10 @@ html, body, p, li, h1, h2, h3, label, input, textarea, button { font-family: 'Ro
 ::-webkit-scrollbar-thumb:hover { background: rgba(142, 187, 230, 0.75); }
 
 /* ---------- Hero ---------- */
-.vu-hero { background: rgba(51, 117, 174, 0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-           color: #FFFFFF; padding: 2.75rem 2.5rem 2.5rem; margin: 0 0 1.75rem; }
+.vu-hero { position: relative; background: rgba(51, 117, 174, 0.86); backdrop-filter: blur(10px);
+           -webkit-backdrop-filter: blur(10px); color: #FFFFFF; padding: 2.75rem 2.5rem 2.5rem;
+           margin: 0 0 1.75rem; border-radius: 14px; }
+.vu-hello { display: none; }
 .vu-hero h1 { color: #FFFFFF !important; font-weight: 300 !important; font-size: 2.6rem !important;
               line-height: 1.2 !important; margin: 0 0 1rem !important; padding: 0 !important; }
 .vu-hero p { color: #FFFFFF; font-size: 1.1rem; font-weight: 300; line-height: 1.6; margin: 0; max-width: 34rem; }
@@ -165,5 +167,67 @@ a.vu-doc-link { color: #8EBBE6 !important; font-size: 0.9rem; }
   }
   [data-testid="stChatMessage"]:hover::before, .stButton > button:hover::before {
     opacity: 1; animation: vu-spin 2.8s linear infinite;
+  }
+}
+
+/* ---------- Top bar (replaces the sidebar) ---------- */
+.st-key-vu-topbar { background: rgba(14, 28, 42, 0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+                    border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 0.55rem 0.8rem;
+                    margin-bottom: 1rem; }
+.st-key-vu-topbar .vu-brand { margin: 0; }
+.st-key-vu-topbar .stButton > button, .st-key-vu-topbar [data-testid="stPopover"] button { white-space: nowrap; }
+[data-testid="stPopover"] button { background: rgba(14, 28, 42, 0.55); color: #A9CBEB;
+                                   border: 1px solid rgba(142, 187, 230, 0.55); border-radius: 10px;
+                                   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease; }
+[data-testid="stPopover"] button:hover { background: #3375AE; color: #FFFFFF; border-color: #3375AE;
+                                         box-shadow: 0 0 14px rgba(91, 155, 213, 0.6); }
+[data-testid="stPopoverBody"] { background: rgba(14, 28, 42, 0.92); backdrop-filter: blur(18px);
+                                -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(142, 187, 230, 0.25);
+                                border-radius: 14px; color: #E6EDF3; max-width: 26rem; }
+.vu-about p { margin: 0 0 0.75rem; line-height: 1.55; color: #C9D6E2; font-size: 0.92rem; }
+.vu-about h4 { color: #8EBBE6; font-size: 0.85rem; font-weight: 500; margin: 0.9rem 0 0.35rem; }
+.vu-about code { color: #B4D3F0; background: rgba(255, 255, 255, 0.06); padding: 0.05rem 0.3rem; border-radius: 4px; }
+.vu-about .vu-credit { margin-top: 0.9rem; }
+
+/* Tiny, always-visible photo credit in the corner (CC BY asks for visible attribution) */
+.vu-photo-credit { position: fixed; left: 1rem; bottom: 0.6rem; z-index: 5; font-size: 0.7rem;
+                   color: rgba(201, 214, 226, 0.55); }
+.vu-photo-credit a { color: inherit; }
+.vu-photo-credit a:hover { color: #8EBBE6; }
+
+/* ---------- Intro: "Hoi" types itself in the hero's spot, VU blue fills in, headline rises ----------
+   Only active while the empty .vu-intro marker exists (first load of a visit). Later reruns render a
+   different marker, so these :has() rules switch off and nothing replays. The hero HTML never changes. */
+@keyframes vu-type { to { max-width: 1em; } }
+@keyframes vu-hello-out { to { opacity: 0; transform: translateY(calc(-50% - 14px)); visibility: hidden; } }
+@keyframes vu-hero-fill {
+  from { background-color: rgba(51, 117, 174, 0); backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+  to   { background-color: rgba(51, 117, 174, 0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stApp:has(.vu-intro) .vu-hello {
+    display: flex; align-items: center; position: absolute; left: 2.5rem; top: 50%; transform: translateY(-50%);
+    color: #FFFFFF; font-weight: 300; font-size: clamp(3.5rem, 8vw, 5.5rem); line-height: 1;
+    text-shadow: 0 0 24px rgba(91, 155, 213, 0.5); pointer-events: none;
+    animation: vu-hello-out 1s ease 1.9s forwards;
+  }
+  .stApp:has(.vu-intro) .vu-hello .l { display: inline-block; max-width: 0; overflow: hidden; vertical-align: bottom;
+                                       animation: vu-type 0.1s steps(1) var(--d) forwards; }
+  .stApp:has(.vu-intro) .vu-hello .vu-caret { margin-left: 6px; }
+
+  /* The blue spreads in behind the greeting, then the hero's text rises in a stagger */
+  .stApp:has(.vu-intro) .vu-hero { animation: vu-hero-fill 0.8s ease 1.9s backwards; }
+  .stApp:has(.vu-intro) .vu-hero h1 { animation-delay: 2.35s; }
+  .stApp:has(.vu-intro) .vu-hero p { animation-delay: 2.5s; }
+  .stApp:has(.vu-intro) .vu-hero .vu-note { animation-delay: 2.65s; }
+
+  /* Then everything else fades in */
+  .stApp:has(.vu-intro) .st-key-vu-topbar,
+  .stApp:has(.vu-intro) [data-testid="stBottom"],
+  .stApp:has(.vu-intro) .vu-photo-credit,
+  .stApp:has(.vu-intro) [data-testid="stMain"] .stButton,
+  .stApp:has(.vu-intro) [data-testid="stMain"] [data-testid="stMarkdownContainer"]:not(:has(.vu-hero)):not(:has(.vu-intro)) {
+    animation: vu-fade 0.8s ease-out 2.9s backwards;
   }
 }

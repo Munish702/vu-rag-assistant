@@ -35,6 +35,7 @@ EFFECTS = {
     "follow_ups": True,          # suggest 2 follow-up questions after each answer (one extra LLM call)
     "background_zoom": True,     # very slow zoom on the background photo
     "travelling_border": True,   # light beam that travels around cards on hover
+    "intro": True,               # "Hoi" typewriter greeting on the first load of each visit
 }
 
 EXAMPLES = {
@@ -406,31 +407,50 @@ def answer_live(question: str, idx: int) -> dict | None:
 # --------------------------------------------------------------------------
 # Page
 # --------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown(
+def about_html() -> str:
+    credit = f'<div class="vu-credit">{BACKGROUND_CREDIT}</div>' if BACKGROUND.exists() else ""
+    return (
+        '<div class="vu-about">'
+        "<p>Answers come only from the 2026-2027 study guides and the Teaching and Examination "
+        "Regulations of the MSc Artificial Intelligence at VU Amsterdam. Every answer shows the "
+        "passages it is based on.</p>"
+        "<p>Independent student project, not an official VU service. Check the cited source or ask "
+        "your academic adviser before making decisions.</p>"
+        "<h4>How it works</h4>"
+        f"<p>Retrieval <code>{html.escape(RETRIEVAL_MODE)}</code>, reranker "
+        f"<code>{html.escape(RERANK_MODEL)}</code>, language model <code>{html.escape(LLM_MODEL)}</code> "
+        "running locally.</p>"
+        f"{credit}</div>"
+    )
+
+
+# Top bar: wordmark on the left, "New chat" and "About" on the right.
+with st.container(key="vu-topbar"):
+    brand, new_chat, about = st.columns([5, 1.6, 1.3], vertical_alignment="center")
+    brand.markdown(
         '<div class="vu-brand"><div class="mark">AI</div>'
-        '<div class="name">AI master<br>study assistant</div></div>',
+        '<div class="name">AI master study assistant</div></div>',
         unsafe_allow_html=True,
     )
-    st.write("Answers come only from the 2026-2027 study guides and the Teaching and "
-             "Examination Regulations of the MSc Artificial Intelligence at VU Amsterdam.")
-    st.markdown(
-        '<div class="vu-sidenote">Independent student project, not an official VU service. '
-        "Check the cited source or ask your academic adviser before making decisions.</div>",
-        unsafe_allow_html=True,
-    )
-    if st.button("Start a new conversation", icon=":material/add_comment:"):
+    if new_chat.button("New chat", icon=":material/add_comment:", key="new-chat"):
         st.session_state.messages = []
         st.rerun()
-    with st.expander("Technical details"):
-        st.markdown(f"- Retrieval: `{RETRIEVAL_MODE}`\n"
-                    f"- Reranker: `{RERANK_MODEL}`\n"
-                    f"- Language model: `{LLM_MODEL}` (runs locally)")
-    if BACKGROUND_CREDIT and BACKGROUND.exists():
-        st.markdown(f'<div class="vu-credit">{BACKGROUND_CREDIT}</div>', unsafe_allow_html=True)
+    with about.popover("About", icon=":material/info:"):
+        st.markdown(about_html(), unsafe_allow_html=True)
+
+# Intro marker: on the first run of a visit the empty .vu-intro marker switches the greeting
+# animation on (see app_style.css). Later runs render a different marker in the same spot, so
+# the hero keeps its place and nothing animates again.
+show_intro = EFFECTS["intro"] and not st.session_state.get("intro_done")
+st.markdown('<div class="vu-intro"></div>' if show_intro else '<div class="vu-intro-done"></div>',
+            unsafe_allow_html=True)
+st.session_state.intro_done = True
 
 st.markdown(
     '<div class="vu-hero">'
+    '<div class="vu-hello" aria-hidden="true">'
+    '<span class="l" style="--d:0.35s">H</span><span class="l" style="--d:0.6s">o</span>'
+    '<span class="l" style="--d:0.85s">i</span><span class="vu-caret"></span></div>'
     "<h1>Ask about exams, resits and courses</h1>"
     "<p>Answers come only from the 2026-2027 study guides and exam regulations of the "
     "MSc Artificial Intelligence, with the exact passages shown.</p>"
@@ -438,6 +458,10 @@ st.markdown(
     "</div>",
     unsafe_allow_html=True,
 )
+
+if BACKGROUND.exists():
+    st.markdown(f'<div class="vu-photo-credit">{BACKGROUND_CREDIT.replace("Background: ", "Photo: ")}</div>',
+                unsafe_allow_html=True)
 
 try:
     warm_up()
