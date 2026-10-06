@@ -6,7 +6,7 @@ Runs **fully locally** on a laptop (no API keys, no data leaves the machine).
 
 > **Headline result:** on a 48-question evaluation set, retrieval Recall@5 went from **0.81 → 0.95** and answers containing the correct key facts from **0.81 → 0.91**, with **zero hallucinated answers on unanswerable questions**.
 
-<!-- TODO: add a screenshot or GIF of the demo here -->
+![Demo: asking the assistant how Deep Learning is graded](assets/demo.gif)
 
 ---
 
@@ -143,6 +143,13 @@ experiments/                # every evaluation run, with its full configuration
    (the PDFs are VU's and are not redistributed here).
 2. Install [Ollama](https://ollama.com) and pull the model: `ollama pull qwen2.5:7b`
 3. Set up and run:
+### Run the web app
+
+```bash
+streamlit run src/app.py
+```
+
+On macOS you can also double-click `start.command`.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
