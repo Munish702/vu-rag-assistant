@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Study Assistant · plain answers from the MSc AI rules at VU Amsterdam</title>
+<meta name="description" content="Ask about exams, resits, admission and courses in the MSc Artificial Intelligence at VU Amsterdam. Answers come only from the 2026-2027 study guides and exam regulations, with the exact passage shown. An independent student project.">
+<meta name="theme-color" content="#060B14">
+<meta property="og:title" content="AI Study Assistant">
+<meta property="og:description" content="The whole rulebook, collapsed into one answer you can understand. An independent student project for the MSc AI at VU Amsterdam.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233375AE'/><text x='16' y='21' font-family='Arial,sans-serif' font-size='13' font-weight='700' fill='white' text-anchor='middle'>AI</text></svg>">
+<link rel="preload" as="image" href="assets/poster-d.webp" media="(min-width: 761px)" fetchpriority="high">
+<link rel="preload" as="image" href="assets/poster-m.webp" media="(max-width: 760px)" fetchpriority="high">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap">
+<link rel="stylesheet" href="scrollcraft.css">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add('js');</script>
+<noscript><style>
+  .js .hoi .l { opacity: 1; }
+  .desk { opacity: 1 !important; pointer-events: auto !important; }
+  .copy, .scrim, .rulebook { display: none; }
+</style></noscript>
+</head>
+<body>
+
+<a class="skip" href="#ask">Skip to the chat</a>
+<div class="sc-grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <a class="mark" href="#top" aria-label="AI Study Assistant, back to the start">
+    <span class="mark__sq" aria-hidden="true">AI</span>
+    <span class="mark__txt">
+      <span class="mark__name">Study Assistant</span>
+      <span class="mark__note">Independent student project</span>
+    </span>
+  </a>
+  <nav class="map" aria-label="Where you are on the page">
+    <ol>
+      <li><button class="map__stop" type="button" data-leg="0" aria-current="step"><span class="map__dot" aria-hidden="true"></span><span class="map__label">Hoi</span></button></li>
+      <li><button class="map__stop" type="button" data-leg="1"><span class="map__dot" aria-hidden="true"></span><span class="map__label">The rulebook</span></button></li>
+      <li><button class="map__stop" type="button" data-leg="2"><span class="map__dot" aria-hidden="true"></span><span class="map__label">Ask</span></button></li>
+    </ol>
+  </nav>
+  <a class="code" href="https://github.com/Munish702/vu-rag-assistant" target="_blank" rel="noopener" aria-label="View the code on GitHub">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9 3 7 13"/></svg>
+    <span class="code__label">View the code</span>
+  </a>
+</header>
+
+<main id="top" data-sc-mode="worldflight" data-sc-seam="0.16">
+
+  <!-- The stage. One fixed place for the whole page: the campus at night is
+       always underneath, and the three legs are mounted over it at once. -->
+  <div data-sc-world>
+
+    <div class="campus">
+      <div class="plane plane--poster">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/poster-m.webp">
+          <img src="assets/poster-d.webp" alt="" decoding="async" fetchpriority="high">
+        </picture>
+      </div>
+      <div class="plane plane--layer plane--sky">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/sky-m.webp">
+          <img src="assets/sky-d.webp" alt="" decoding="async">
+        </picture>
+      </div>
+      <div class="plane plane--hoi">
+        <h1 class="hoi">
+          <span class="sr-only">Hoi! Welcome to the AI Study Assistant for the MSc AI at VU Amsterdam.</span>
+          <span class="hoi__word" aria-hidden="true"><span class="l">H</span><span class="l">o</span><span class="l">i</span><span class="hoi__base"></span><span class="hoi__caret"></span></span>
+        </h1>
+      </div>
+      <div class="plane plane--layer plane--building">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/building-m.webp">
+          <img src="assets/building-d.webp" alt="The main building of the Vrije Universiteit Amsterdam at night, its glass facade lit with the words vrije Universiteit" decoding="async">
+        </picture>
+      </div>
+      <div class="plane plane--layer plane--bloom" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/bloom-m.webp">
+          <img src="assets/bloom-d.webp" alt="" decoding="async">
+        </picture>
+      </div>
+      <div class="plane plane--layer plane--lamp" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/lamp-m.webp">
+          <img src="assets/lamp-d.webp" alt="" decoding="async">
+        </picture>
+        <div class="lamp-glow"></div>
+      </div>
+      <div class="plane plane--mist" aria-hidden="true"></div>
+      <div class="plane plane--layer plane--blur" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 760px)" srcset="assets/blur-m.webp">
+          <img src="assets/blur-d.webp" alt="" decoding="async">
+        </picture>
+      </div>
+      <div class="plane plane--tint" aria-hidden="true"></div>
+      <div class="plane plane--grade" aria-hidden="true"></div>
+    </div>
+
+    <!-- Leg 0: Hoi. The campus itself is the leg. -->
+    <div data-sc-segment data-sc-w="1.6" data-sc-waypoint="Hoi"></div>
+
+    <!-- Leg 1: the rulebook. Real lines from the regulations and study guides
+         fly at the reader, freeze, and collapse into one plain answer. -->
+    <div data-sc-segment data-sc-w="2.8" data-sc-waypoint="The rulebook">
+      <div class="rulebook" aria-hidden="true">
+        <div class="field">
+          <p class="frag" data-s="0.000"><span class="frag__src">Article 3.5</span>Per academic year, two opportunities to take examinations will be offered for each unit of education.</p>
+          <p class="frag" data-s="0.040"><span class="frag__src">Article 3.1</span>Every student must sign up to participate in the units of education of the programme, the examinations and resits.</p>
+          <p class="frag" data-s="0.080"><span class="frag__src">Article 3.6</span>To pass a given course or unit, a final mark of 6 or higher is required.</p>
+          <p class="frag" data-s="0.120"><span class="frag__src">Evolutionary Computing</span>No resit is possible for the programming assignment.</p>
+          <p class="frag" data-s="0.160"><span class="frag__src">Article 2.1</span>A unit of education comprises 6 EC or a multiple thereof.</p>
+          <p class="frag" data-s="0.200"><span class="frag__src">Article 3.4</span>The examiner determines the result of a written examination within fifteen working days.</p>
+          <p class="frag" data-s="0.240"><span class="frag__src">Article 3.5</span>The most recent mark will apply in the event of a resit.</p>
+          <p class="frag" data-s="0.280"><span class="frag__src">Article 3.9</span>Within twenty working days after the announcement of the results of a written examination, … the student has the right to inspect their graded examination.</p>
+          <p class="frag" data-s="0.320"><span class="frag__src">Article 9.1</span>The programme has a workload of 120 EC.</p>
+          <p class="frag" data-s="0.360"><span class="frag__src">Article 3.6</span>A final mark between 5 and 6 will be rounded to the nearest whole number: final marks below 5.50, rounded down; final marks of 5.50 or higher, rounded up.</p>
+          <p class="frag" data-s="0.400"><span class="frag__src">Article 3.1</span>Signing up may only take place in the designated periods.</p>
+          <p class="frag" data-s="0.440"><span class="frag__src">Natural Language Processing</span>Retakes of practical assignments to improve the grade are not allowed.</p>
+          <p class="frag" data-s="0.480"><span class="frag__src">Article 3.3</span>A second examiner is present when an oral examination is being held, unless the Examination Board has determined otherwise.</p>
+          <p class="frag" data-s="0.520"><span class="frag__src">Article 3.5</span>The resit for a (partial) examination may not take place within ten working days of the announcement of the results for the original (partial) examination.</p>
+          <p class="frag" data-s="0.560"><span class="frag__src">Article 3.7</span>The final project is excluded from this exemption possibility.</p>
+          <p class="frag" data-s="0.600"><span class="frag__src">Article 7.1</span>The Master’s programme starts on 1 September.</p>
+          <p class="frag" data-s="0.640"><span class="frag__src">Article 3.4</span>However, the marking deadline for final projects is no longer than twenty working days after submission.</p>
+          <p class="frag" data-s="0.680"><span class="frag__src">Article 3.5</span>Requests for an additional examination opportunity must be submitted to the Examination Board no later than 15 July.</p>
+          <p class="frag" data-s="0.720"><span class="frag__src">Article 3.6</span>(Partial) grades are given on a scale from 1 to 10 with no more than one figure after the decimal point.</p>
+          <p class="frag" data-s="0.760"><span class="frag__src">Article 8.1</span>Students will only be admitted to the final project/thesis … after obtaining at least 60 ECTS worth of courses from the Master Artificial Intelligence.</p>
+          <p class="frag" data-s="0.800"><span class="frag__src">Article 3.2</span>At the examiner’s request, the Examination Board may permit a different form of examination than is stipulated in the study guide.</p>
+          <p class="frag" data-s="0.840"><span class="frag__src">Deep Learning</span>There is a resit for the exam. The practical assignments cannot be redone.</p>
+          <p class="frag" data-s="0.880"><span class="frag__src">Article 2.1</span>Every semester consists of three consecutive periods. The first two periods each consist of eight weeks, and the final period consists of four weeks.</p>
+          <p class="frag" data-s="0.920"><span class="frag__src">Article 3.5</span>A resit is allowed for both passed and failed units of education.</p>
+          <p class="frag" data-s="0.960"><span class="frag__src">Article 9.5</span>The language of instruction is English.</p>
+          <p class="frag" data-s="1.000"><span class="frag__src">Article 3.8</span>The validity period of examinations passed and exemption from examinations is unlimited, unless otherwise specified in Section B.</p>
+          <p class="frag" data-s="1.040"><span class="frag__src">Article 10.5</span>In the case of practical exercises, there may be attendance requirements.</p>
+          <p class="frag" data-s="1.080"><span class="frag__src">Article 10.3</span>If the student wishes to take a different unit of education than listed, permission must be obtained in writing from the Examinations Board in advance.</p>
+          <p class="frag" data-s="1.120"><span class="frag__src">Article 3.3</span>No more than one student will be examined orally at a time, unless specified otherwise in part B for the relevant unit of education.</p>
+          <p class="frag" data-s="1.160"><span class="frag__src">Article 10.3</span>The student can take one or more of the following electives without prior consent from the Examination Board.</p>
+
+          <p class="frag" data-s="1.35" data-x="-0.40" data-y="0.28"><span class="frag__src">Article 7.2</span>TOEFL iBT: an overall score of at least 4.5 plus a minimum score of: Listening: 4, Reading: 4, Writing: 4, Speaking: 4</p>
+          <p class="frag" data-s="1.42" data-x="-0.30" data-y="-0.22"><span class="frag__src">Article 7.2</span>At the start of the program, the test must not have been taken more than two years ago.</p>
+          <p class="frag" data-s="1.50" data-x="0.42" data-y="0.20"><span class="frag__src">Article 7.2</span>Cambridge C2 Proficiency/Certificate of Proficiency in English (CPE): an overall score of at least [180]</p>
+          <p class="frag" data-s="1.56" data-x="-0.10" data-y="0.30"><span class="frag__src">Article 7.2</span>Pearson PTE Academic: an overall score of at least [65].</p>
+          <p class="frag" data-s="1.62" data-x="-0.52" data-y="-0.05"><span class="frag__src">Article 7.2</span>Applicants with a Bachelor's degree obtained at an institution outside the Netherlands may be asked for additional methods to prove that they meet the admission requirements.</p>
+          <p class="frag" data-s="1.68" data-x="0.80" data-y="-0.42"><span class="frag__src">Article 7.2</span>LanguageCert Academic SELT: an overall score of at least [70].</p>
+          <p class="frag" data-s="1.74" data-x="0.05" data-y="-0.62"><span class="frag__src">Article 7.2</span>The Admission Board will investigate whether the applicant meets the admission requirements.</p>
+          <p class="frag" data-s="1.80" data-x="-0.75" data-y="0.45"><span class="frag__src">Article 7.2</span>… a university-level Bachelor's degree in Computer Science or other technical Bachelor's programme, with at least 18 ECTS in AI key area courses.</p>
+          <p class="frag" data-s="1.87" data-x="0.30" data-y="0.62"><span class="frag__src">Article 7.2</span>… a vwo diploma or equivalent diploma in which the course on English of a comparable level is required has been earned;</p>
+          <p class="frag" data-s="1.95" data-x="-0.30" data-y="-0.02"><span class="frag__src">Article 7.2</span>The 8 key areas from the KION framework are: (Cognitive) Psychology; Computational Linguistics; …</p>
+
+          <article class="answer" data-s="1.45" data-x="0.16" data-y="-0.10">
+            <p class="answer__q">What IELTS score do I need?</p>
+            <div class="answer__card">
+              <div class="answer__body">
+                <p class="answer__legal"><span class="frag__src">Article 7.2</span>IELTS Academic: an overall score of at least 6.5 plus a minimum score of 6.0 for each subcomponent (Listening, Reading, Writing and Speaking);</p>
+                <p class="answer__plain">You need an IELTS Academic overall score of at least 6.5, with a minimum score of 6.0 for each subcomponent (Listening, Reading, Writing, and Speaking) <span class="cite-chip">1</span>.</p>
+              </div>
+            </div>
+            <p class="answer__src">
+              <span class="cite-chip">1</span>
+              <b>Artificial Intelligence TER 2026-2027 - Article 7.2 Admission requirements (part 1/2)</b>
+              <span class="tag tag--general">General rule</span>
+              <span class="answer__note">A real answer the assistant gave.</span>
+            </p>
+          </article>
+        </div>
+
+        <div class="qbar">
+          <span class="qbar__icon">?</span>
+          <span class="qbar__text"></span>
+          <span class="qbar__caret"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leg 2: Ask. The world goes quiet and the desk arrives. -->
+    <div data-sc-segment data-sc-w="0.8" data-sc-waypoint="Ask"></div>
+  </div>
+
+  <!-- The copy layer. Each block is windowed against the whole track. -->
+  <div data-sc-world-copy>
+    <div class="scrim scrim--hero" data-scrim="hero" aria-hidden="true"></div>
+    <div class="copy copy--hero" data-sc-copy data-sc-window="hero">
+      <p class="lede">Your questions about the MSc AI rules at VU Amsterdam, answered in plain words.</p>
+      <p class="lede__note">Independent student project. Not an official VU service.</p>
+    </div>
+
+    <div class="scrim scrim--s1" data-scrim="0.26 0.431" aria-hidden="true"></div>
+    <div class="copy copy--s1" data-sc-copy data-sc-window="0.26 0.431">
+      <h2 class="statement">Ask in your own words.</h2>
+    </div>
+
+    <div class="scrim scrim--s2" data-scrim="0.442 0.646" aria-hidden="true"></div>
+    <div class="copy copy--s2" data-sc-copy data-sc-window="0.442 0.646">
+      <h2 class="statement">It reads every rule, so you don't have to.</h2>
+    </div>
+
+    <div class="copy copy--s3" data-sc-copy data-sc-window="0.705 0.851">
+      <h2 class="statement statement--sm">One clear answer. And the page it came from.</h2>
+      <p class="sr-only">For example, asked “What IELTS score do I need?”, the assistant answered: “You need an IELTS Academic overall score of at least 6.5, with a minimum score of 6.0 for each subcomponent (Listening, Reading, Writing, and Speaking).” Its source is Article 7.2 of the Teaching and Examination Regulations.</p>
+    </div>
+
+    <section id="ask" class="desk" data-sc-copy data-sc-window="0.835 1 0.3 0" aria-labelledby="desk-title">
+      <header class="desk__head">
+        <h2 class="desk__title" id="desk-title">Ask the assistant</h2>
+        <p class="desk__status" data-mode="checking"><span class="desk__dot" aria-hidden="true"></span><span class="desk__mode">Connecting</span></p>
+      </header>
+
+      <div class="desk__log" role="log" aria-label="Conversation" tabindex="0">
+        <div class="msg msg--bot" data-welcome>
+          <p>Hoi! Ask me about exams, resits, admission or courses in the MSc AI. I only use the 2026-2027 study guides and exam regulations, and I show you the passage behind every answer.</p>
+          <p class="msg__hint" data-recorded-note hidden>This online copy has no language model, so it replays real answers the assistant gave. To ask anything, run it on your own computer: <a href="https://github.com/Munish702/vu-rag-assistant" target="_blank" rel="noopener">View the code</a>.</p>
+          <p class="chips-label">Try one</p>
+          <div class="chips" data-examples>
+            <button class="chip-q" type="button">How is Deep Learning graded?</button>
+            <button class="chip-q" type="button">What IELTS score do I need?</button>
+            <button class="chip-q" type="button">What is the tuition fee for the AI master?</button>
+          </div>
+        </div>
+      </div>
+
+      <form class="desk__composer" action="#ask" novalidate>
+        <label class="sr-only" for="question">Your question</label>
+        <textarea id="question" name="question" rows="1" maxlength="500" autocomplete="off" placeholder="Ask a question, e.g. Can I resit an exam I already passed?"></textarea>
+        <button class="send" type="submit" disabled>Ask</button>
+      </form>
+      <p class="desk__foot">Independent student project, not an official VU Amsterdam service. Check the cited passage or ask your academic adviser before you decide anything. <a href="https://github.com/Munish702/vu-rag-assistant" target="_blank" rel="noopener">View the code</a></p>
+    </section>
+  </div>
+
+  <div data-sc-spacer aria-hidden="true"></div>
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
+<script src="site.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>

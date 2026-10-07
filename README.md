@@ -8,22 +8,23 @@ Runs **fully locally** on a laptop (no API keys, no data leaves the machine).
 
 ![Demo: asking the assistant how Deep Learning is graded](assets/demo.gif)
 
+**Website:** [munish702.github.io/vu-rag-assistant](https://munish702.github.io/vu-rag-assistant/). A scroll-driven page that shows the idea (the whole rulebook collapses into one plain answer) and ends in the chat. Online it replays real recorded answers; run it on your own computer for live ones (see [Run the website](#run-the-website)).
+
 ---
 
 ## Example
 
+A real answer from the assistant (asked in the app, 6 October 2026):
+
 ```
-$ python src/generate.py "Can I resit an exam I already passed to get a higher grade?"
+Q: What IELTS score do I need?
 
-Yes, a resit is allowed for both passed and failed units, but the most recent
-mark applies, even if it is lower than your original grade [1].
+You need an IELTS Academic overall score of at least 6.5, with a minimum score
+of 6.0 for each subcomponent (Listening, Reading, Writing, and Speaking) [1].
 
-Sources:
-  [1] Artificial Intelligence TER 2026-2027 - Article 3.5 Examination opportunities
-  ...
+[1] Artificial Intelligence TER 2026-2027 - Article 7.2 Admission requirements (part 1/2)
+    General rule. Searched 1,102 passages, reranked 35, used 5.
 ```
-
-<!-- TODO: replace with a real output from your final system -->
 
 ---
 
@@ -130,7 +131,11 @@ src/
 ├── retrieve.py             # dense / BM25 / hybrid / rerank retrieval
 ├── generate.py             # prompt construction + local LLM (Ollama)
 ├── evaluate.py             # retrieval metrics (Recall@k, MRR)
-└── evaluate_generation.py  # abstention, key facts, citations
+├── evaluate_generation.py  # abstention, key facts, citations
+├── server.py               # serves web/ and answers its chat, locally
+└── app.py                  # the earlier Streamlit interface
+web/                        # the website (static: HTML, CSS, JS, photo planes)
+tools/make_plates.py        # how the night photo was cut into depth planes
 data/
 ├── raw/manifest.csv        # which documents to download (PDFs not included)
 └── eval/questions.jsonl    # 48-question evaluation set
@@ -142,14 +147,7 @@ experiments/                # every evaluation run, with its full configuration
 1. Download the documents listed in `data/raw/manifest.csv` from the VU website into `data/raw/`
    (the PDFs are VU's and are not redistributed here).
 2. Install [Ollama](https://ollama.com) and pull the model: `ollama pull qwen2.5:7b`
-3. Set up and run:
-### Run the web app
-
-```bash
-streamlit run src/app.py
-```
-
-On macOS you can also double-click `start.command`.
+3. Set up, build the index and ask a first question:
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -160,6 +158,20 @@ python src/generate.py "Can I resit an exam I already passed?"
 ```
 
 Evaluate: `python src/evaluate.py` and `python src/evaluate_generation.py`.
+
+### Run the website
+
+```bash
+python src/server.py
+```
+
+This opens http://127.0.0.1:8000: the scroll page with a live chat, answered on your own computer: your questions never leave it. On macOS you can also double-click `start.command`. Thumbs up/down are saved to `data/feedback.jsonl`, which is not committed.
+
+The earlier Streamlit interface still works: `streamlit run src/app.py`.
+
+### Publish the website
+
+`.github/workflows/pages.yml` publishes `web/` to GitHub Pages on every push to `main` (one-time setup: Settings → Pages → Source: GitHub Actions). There is no language model online, so the published chat replays three answers the assistant really gave, and labels each one as recorded.
 
 ## Limitations and next steps
 
@@ -175,4 +187,4 @@ Python · pdfplumber · sentence-transformers · ChromaDB · BM25 (from scratch)
 ---
 
 *Built by Munishwar Pradhan, MSc AI student at VU Amsterdam.* <!-- TODO: add LinkedIn / contact -->
-Background photo: "Amsterdam VU" by Rokus Cornelis, CC BY 3.0, via Wikimedia Commons (modified: faded and blurred).
+Website photo: the VU main building at night, taken by the author. Streamlit app background: "Amsterdam VU" by Rokus Cornelis, CC BY 3.0, via Wikimedia Commons (modified: faded and blurred).
