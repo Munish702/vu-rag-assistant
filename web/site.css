@@ -19,6 +19,7 @@
   --glass-edge: rgb(255 255 255 / 0.09);
   --glass-lip: inset 0 1px 0 rgb(255 255 255 / 0.07);
   --bar-h: 76px;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --r: 18px;
   --r-sm: 12px;
 
@@ -48,7 +49,7 @@ html { background: var(--sc-canvas); }
 .bar {
   position: fixed; inset: 0 0 auto 0; z-index: 60;
   height: var(--bar-h);
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
   padding-inline: var(--sc-gutter);
   pointer-events: none;
 }
@@ -93,53 +94,110 @@ html { background: var(--sc-canvas); }
 }
 .code:active { transform: translateY(1px); }
 
-/* The map. The nav of a continuous world is where you are in it, so it is a
-   route with three stops and a lit line that grows along it as you scroll. */
-.map ol {
-  list-style: none; margin: 0; padding: 5px;
-  display: flex; align-items: center; gap: 18px;
-  position: relative;
-  border-radius: 999px;
-  background: var(--glass); border: 1px solid var(--glass-edge);
-  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
-  box-shadow: var(--glass-lip);
+/* The rail. The page's own scrollbar, redrawn as a scan line: a ruler of
+   faint ticks, a lit trace down to where you are, a square cursor (the same
+   square the map is made of) and a terminal tag that rides beside it and
+   names the page. The native bar is hidden; this one drags like it. */
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+
+.rail {
+  --rail-w: 22px;
+  position: fixed; z-index: 55;
+  right: 12px; top: calc(var(--bar-h) + 10px); bottom: 22px;
+  width: var(--rail-w);
+  touch-action: none; cursor: grab;
+  -webkit-user-select: none; user-select: none;
 }
-.map ol::before,
-.map ol::after {
-  content: ""; position: absolute; top: 50%; height: 1px;
-  left: var(--line-l, 24px); right: var(--line-r, 24px);
+.rail.is-drag { cursor: grabbing; }
+.rail__track {
+  position: absolute; inset: 0;
+  /* the ruler: a 1px line with small ticks every 14px, a longer one every 70px */
+  background:
+    linear-gradient(rgb(var(--neon) / 0.16), rgb(var(--neon) / 0.16)) 50% 0 / 1px 100% no-repeat,
+    repeating-linear-gradient(to bottom, rgb(var(--neon) / 0.22) 0 1px, transparent 1px 70px) calc(50% - 6px) 0 / 6px 100% no-repeat,
+    repeating-linear-gradient(to bottom, rgb(var(--neon) / 0.12) 0 1px, transparent 1px 14px) calc(50% - 3.5px) 0 / 3px 100% no-repeat;
 }
-.map ol::before { background: rgb(255 255 255 / 0.12); }
-.map ol::after {
-  background: rgb(var(--neon));
-  box-shadow: 0 0 8px rgb(var(--neon) / 0.8);
-  transform-origin: 0 50%;
-  transform: scaleX(var(--map-p, 0));
+.rail__fill {
+  position: absolute; left: calc(50% - 0.5px); top: 0; width: 1px; height: 100%;
+  background: linear-gradient(to bottom, rgb(var(--neon) / 0.15), rgb(var(--neon) / 0.95));
+  box-shadow: 0 0 6px 0 rgb(var(--neon) / 0.55);
+  transform-origin: 50% 0;
+  transform: scaleY(var(--rail-p, 0));
 }
-.map li { position: relative; z-index: 1; }
-.map__stop {
-  display: flex; align-items: center; gap: 9px;
-  height: 32px; padding: 0 13px; border: 0; border-radius: 999px;
-  background: rgb(8 15 26 / 0.9); color: var(--sc-ink-soft);
-  font-size: 13.5px; font-weight: 500; letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: color 160ms var(--sc-ease-out), background-color 160ms var(--sc-ease-out);
+.rail__stops { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; pointer-events: none; }
+.rail__stops li { position: absolute; left: 0; right: 0; top: 0; height: 0; }
+.rail__stop {
+  position: absolute; left: 50%; top: 0;
+  width: 26px; height: 26px; margin: -13px 0 0 -13px;     /* a fair tap target round a 7px mark */
+  padding: 0; border: 0; background: none; cursor: pointer;
+  pointer-events: auto;
 }
-.map__dot {
-  width: 9px; height: 9px; border-radius: 50%; flex: none;
+.rail__stop::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
   background: var(--sc-canvas);
-  border: 1.5px solid rgb(255 255 255 / 0.4);
+  border: 1px solid rgb(var(--neon) / 0.55);
+  transform: rotate(45deg);
   transition: background-color 200ms var(--sc-ease-out), border-color 200ms var(--sc-ease-out), box-shadow 200ms var(--sc-ease-out);
 }
-.map__stop[aria-current="step"] { color: var(--sc-ink); background: rgb(20 34 52 / 0.95); }
-.map__stop[aria-current="step"] .map__dot {
+.rail__stop.is-past::before { background: rgb(var(--neon) / 0.55); }
+.rail__stop[aria-current="step"]::before {
   background: rgb(var(--neon)); border-color: rgb(var(--neon));
-  box-shadow: 0 0 0 3px rgb(var(--neon) / 0.18), 0 0 12px rgb(var(--neon) / 0.9);
+  box-shadow: 0 0 8px rgb(var(--neon) / 0.9);
 }
 @media (hover: hover) and (pointer: fine) {
-  .map__stop:hover { color: var(--sc-ink); }
+  .rail__stop:hover::before { border-color: rgb(var(--neon)); box-shadow: 0 0 0 3px rgb(var(--neon) / 0.18); }
 }
-.map__stop:active { transform: translateY(1px); }
+.rail__stop:focus-visible { outline: 2px solid rgb(var(--neon)); outline-offset: -4px; border-radius: 4px; }
+
+.rail__thumb {
+  position: absolute; left: 0; right: 0; top: 0; height: 0;
+  transform: translate3d(0, var(--rail-y, 0px), 0);
+  pointer-events: none;
+}
+.rail__sq {
+  position: absolute; left: 50%; top: 0;
+  width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+  background: rgb(var(--neon));
+  box-shadow: 0 0 0 3px rgb(var(--neon) / 0.16), 0 0 12px 1px rgb(var(--neon) / 0.85);
+}
+.rail.is-moving .rail__sq { box-shadow: 0 0 0 4px rgb(var(--neon) / 0.22), 0 0 18px 3px rgb(var(--neon) / 0.95); }
+/* the tag: dark glass with corner brackets, joined to the cursor by a short lead */
+.rail__tag {
+  position: absolute; right: calc(100% + 2px); top: 0;
+  translate: 0 -50%;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px 7px 9px;
+  font: 500 12px/1 var(--mono); letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgb(var(--neon));
+  white-space: nowrap;
+  background: rgb(5 10 18 / 0.82);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgb(var(--neon) / 0.14);
+  transition: opacity 220ms var(--sc-ease-out), translate 220ms var(--sc-ease-out);
+}
+.rail__tag::before, .rail__tag::after {
+  content: ""; position: absolute; width: 6px; height: 6px;
+  border: 1px solid rgb(var(--neon) / 0.9);
+}
+.rail__tag::before { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+.rail__tag::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+.rail__chev { color: rgb(var(--neon) / 0.6); letter-spacing: 0; }
+.rail__name { color: #d8e9fb; }
+.rail__cur {
+  width: 6px; height: 11px; margin-left: -3px;
+  background: rgb(var(--neon));
+  animation: rail-blink 1.06s steps(1, end) infinite;
+}
+@keyframes rail-blink { 50% { opacity: 0; } }
+.rail__thumb::after {           /* the lead from tag to cursor */
+  content: ""; position: absolute; top: 0; right: calc(50% + 6px); width: calc(50% - 4px); height: 1px;
+  background: rgb(var(--neon) / 0.6);
+}
+/* when the chat would sit under the tag, the tag folds away and the cursor stays */
+.rail.is-tucked .rail__tag { opacity: 0; translate: 8px -50%; }
+.rail.is-tucked .rail__thumb::after { opacity: 0; }
 
 /* ---------------------------------------------------------------- world -- */
 .campus { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--sc-canvas); }
@@ -151,7 +209,7 @@ html { background: var(--sc-canvas); }
 .plane > picture { position: absolute; inset: 0; display: block; }
 .plane img {
   position: absolute; inset: 0; width: 100%; height: 100%; max-width: none;
-  object-fit: cover; object-position: 50% 38%;
+  object-fit: cover; object-position: 50% 40%;
 }
 
 .plane--sky { transform-origin: 50% 40%; }
@@ -169,7 +227,7 @@ html { background: var(--sc-canvas); }
 .lamp-glow {
   position: absolute; left: var(--lamp-x); top: var(--lamp-y);
   width: 46vmin; height: 46vmin; translate: -50% -42%;
-  background: radial-gradient(closest-side, rgb(255 214 236 / 0.24), rgb(255 190 225 / 0.07) 45%, transparent 72%);
+  background: radial-gradient(closest-side, rgb(255 226 170 / 0.22), rgb(255 205 140 / 0.06) 45%, transparent 72%);
   mix-blend-mode: screen; pointer-events: none;
 }
 .plane--mist {
@@ -178,6 +236,9 @@ html { background: var(--sc-canvas); }
     linear-gradient(to top, rgb(6 11 20 / 0.5), transparent 30%);
 }
 .plane--blur { opacity: 0; }
+/* The Netherlands as a grid of tiny squares, lighting up from the VU outward as
+   the reader scrolls. Drawn by site.js; above the blurred campus, below the rulebook. */
+.plane--map { width: 100%; height: 100%; max-width: none; pointer-events: none; will-change: auto; }
 .plane--tint { background: rgb(38 92 170); mix-blend-mode: color; opacity: 0; }
 .plane--grade {
   background:
@@ -186,10 +247,12 @@ html { background: var(--sc-canvas); }
   opacity: 0.35;
 }
 
-/* "Hoi" lives between the sky and the building, so the building rises over it. */
-.plane--hoi { transform-origin: 20% 100%; }
+/* "Hoi" lives between the sky and the building, so the campus is in front of it.
+   It rises from behind the skyline like a sign coming up over the roofs, and the
+   dot of the i lands last: the one lit point, the same neon as the rest of the page. */
+.plane--hoi { transform-origin: 60% 100%; }
 .hoi {
-  position: absolute; left: var(--sc-gutter); top: 0;
+  position: absolute; left: var(--hoi-left, var(--sc-gutter)); top: 0;
   margin: 0;
   font-family: var(--sc-font-display);
   font-size: var(--hoi-size, clamp(6rem, min(28vh, 21vw), 18rem));
@@ -198,23 +261,38 @@ html { background: var(--sc-canvas); }
   line-height: 0.8;
   letter-spacing: -0.045em;
   color: #f4f8fc;
-  text-shadow: 0 0 1px rgb(255 255 255 / 0.35), 0 18px 60px rgb(var(--neon) / 0.22);
+  text-shadow: 0 0.04em 0.12em rgb(4 10 22 / 0.55);
   white-space: nowrap;
   transform: translateY(var(--hoi-top, 18vh));
 }
-.hoi__word { display: inline-flex; align-items: baseline; }
-.hoi__base { width: 0; height: 0; }    /* marks the baseline, so site.js can seat it on the roof */
-.js .hoi .l { opacity: 0; transform: translateY(0.05em); display: inline-block; }
-.js .hoi .l.on { opacity: 1; transform: none; transition: opacity 140ms linear, transform 380ms var(--sc-ease-out); }
-.hoi__caret {
-  display: inline-block; width: 0.07em; height: 0.7em; margin-left: 0.06em;
-  border-radius: 0.02em;
-  background: rgb(var(--neon));
-  box-shadow: 0 0 10px rgb(var(--neon) / 0.9), 0 0 32px rgb(var(--neon) / 0.55);
-  animation: blink 1s steps(1) infinite;
-  transition: opacity 600ms var(--sc-ease-out);
+/* the word fades out at its own baseline, so the letters surface from behind the
+   skyline instead of being cut by a line. The padding keeps the dot inside the mask. */
+.hoi__word {
+  display: inline-flex; align-items: baseline;
+  padding: 0.5em 0.12em 0; margin: -0.5em -0.12em 0;
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 0.2em);
+  mask-image: linear-gradient(to top, transparent 0, #000 0.2em);
 }
-.hoi.is-done .hoi__caret { opacity: 0; animation: none; }
+.hoi__base { width: 0; height: 0; }    /* marks the baseline, so site.js can seat it on the skyline */
+.hoi .l { display: inline-block; position: relative; }
+.js .hoi .l { transform: translateY(0.92em); }
+.js .hoi .l.on { transform: none; transition: transform 1100ms cubic-bezier(0.16, 1, 0.3, 1); }
+.hoi__dot {
+  position: absolute; left: 50%; top: var(--dot-y, -0.02em);
+  width: 0.11em; height: 0.11em; margin-left: -0.0325em;   /* centred on the stem; letter-spacing trims the right side */
+  border-radius: 50%;
+  background: #d9ecff;
+  box-shadow: 0 0 0 0.012em rgb(var(--neon)), 0 0 0.08em rgb(var(--neon)), 0 0 0.32em 0.02em rgb(var(--neon) / 0.6);
+}
+.js .hoi__dot { opacity: 0; transform: translateY(-0.7em); }
+.js .hoi.is-lit .hoi__dot {
+  animation: dot-drop 760ms cubic-bezier(0.34, 1.5, 0.64, 1) both, dot-strike 760ms linear both;
+}
+@keyframes dot-drop { from { transform: translateY(-0.7em); } to { transform: none; } }
+@keyframes dot-strike {          /* a neon tube striking: on, stutter, steady */
+  0% { opacity: 0; } 18% { opacity: 1; } 30% { opacity: 0.25; } 42% { opacity: 1; }
+  52% { opacity: 0.55; } 64%, 100% { opacity: 1; }
+}
 @keyframes blink { 50% { opacity: 0; } }
 
 /* ------------------------------------------------------------- rulebook -- */
@@ -368,13 +446,13 @@ html { background: var(--sc-canvas); }
 .copy--s3 { left: 50%; top: calc(var(--bar-h) + 3.5vh); translate: -50% 0; width: min(46rem, 90vw); text-align: center; }
 
 /* scrims are siblings of the copy they protect, shaped to where it sits */
-.scrim--hero {
-  right: 0; bottom: 0; width: min(52rem, 72vw); height: 56vh;
-  background: radial-gradient(100% 100% at 100% 100%, rgb(6 11 20 / 0.88) 0%, rgb(6 11 20 / 0.6) 40%, transparent 76%);
+.scrim--hero {                     /* the street lights and the bus sit behind the lede */
+  right: 0; bottom: 0; width: min(56rem, 74vw); height: 60vh;
+  background: radial-gradient(100% 100% at 100% 100%, rgb(6 11 20 / 0.94) 0%, rgb(6 11 20 / 0.74) 38%, rgb(6 11 20 / 0.3) 62%, transparent 80%);
 }
 .scrim--s2 {                       /* heavier: the rush flies behind this line */
   right: 0; bottom: 0; width: min(60rem, 80vw); height: 62vh;
-  background: radial-gradient(100% 100% at 100% 100%, rgb(6 11 20 / 0.96) 0%, rgb(6 11 20 / 0.8) 38%, rgb(6 11 20 / 0.4) 62%, transparent 82%);
+  background: radial-gradient(100% 100% at 100% 100%, rgb(6 11 20 / 0.97) 0%, rgb(6 11 20 / 0.86) 38%, rgb(6 11 20 / 0.5) 62%, transparent 84%);
 }
 .scrim--s1 {
   left: 0; bottom: 0; width: min(52rem, 72vw); height: 56vh;
@@ -591,16 +669,12 @@ button.cite-chip {
 /* -------------------------------------------------------------- phone -- */
 @media (max-width: 760px) {
   :root { --bar-h: 60px; --r: 16px; }
-  .plane img { object-position: 46% 50%; }
-  .bar { grid-template-columns: auto 1fr auto; gap: 10px; }
+  .plane img { object-position: 53% 50%; }
   .mark__txt { display: none; }
   .mark__sq { width: 32px; height: 32px; }
-  .map { justify-self: center; }
-  .map ol { gap: 4px; padding: 4px; }
-  .map__stop { height: 30px; padding: 0 10px; gap: 0; }
-  .map__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .map__stop[aria-current="step"] { gap: 7px; }
-  .map__stop[aria-current="step"] .map__label { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  .rail { --rail-w: 16px; right: 1px; top: calc(var(--bar-h) + 6px); bottom: 10px; }
+  .rail__tag { font-size: 10px; letter-spacing: 0.14em; padding: 6px 8px 6px 7px; gap: 6px; }
+  .rail__cur { height: 10px; width: 5px; }
   .code { width: 38px; padding: 0; justify-content: center; }
   .code__label { display: none; }
 
@@ -630,8 +704,10 @@ button.cite-chip {
 
 /* --------------------------------------------------------- reduced motion -- */
 @media (prefers-reduced-motion: reduce) {
-  .js .hoi .l { opacity: 1; transform: none; }
-  .hoi__caret, .qbar__caret, .caret { animation: none; }
+  .js .hoi .l { transform: none; }
+  .js .hoi .l, .js .hoi .l.on { transition: none; }
+  .js .hoi__dot, .js .hoi.is-lit .hoi__dot { opacity: 1; transform: none; animation: none; }
+  .qbar__caret, .caret, .rail__cur { animation: none; }
   .msg--enter { animation: msg-fade 260ms linear both; }
   @keyframes msg-fade { from { opacity: 0; } to { opacity: 1; } }
   .spin { animation-duration: 2.4s; }

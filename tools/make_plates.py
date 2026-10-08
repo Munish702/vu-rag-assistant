@@ -1,110 +1,119 @@
-"""Cut the night campus photo into depth planes for the website's layered hero.
+"""Cut the blue-hour campus photo into depth planes for the website's layered hero.
 
-    python tools/make_plates.py path/to/night-photo.jpg web/assets
+    python tools/make_plates.py path/to/campus-blue.png web/assets
 
 Needs numpy, opencv-python and pillow (not in requirements.txt: the site only
 needs the finished .webp files, which are already in web/assets).
-The coordinates below were measured on the original 3024 x 4032 photo.
+Coordinates are measured on the 1536 x 1024 photo.
 
 Planes (same canvas, so they always align):
-  sky       clean background plate (below-skyline area filled, never visible)
-  building  everything below the skyline, lamp painted out (alpha)
-  lamp      the foreground lamp post (alpha)
-  bloom     soft glow from the lit facade (screen-blended)
+  sky       the clouds alone; everything in front of them filled in (only ever seen at the edges)
+  building  the campus in front of the sky, tree branches included, lamp painted out (alpha)
+  lamp      the street lamp in front of the stairs (alpha)
+  bloom     soft glow from the lit windows (screen-blended)
   blur      the whole scene, blurred and darkened (the world after the hero)
+  poster    the untouched composite, for the first paint
 """
 import sys
-import numpy as np
+
 import cv2
-from PIL import Image, ImageOps, ImageFilter, ImageDraw
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 
 SRC, OUT = sys.argv[1], sys.argv[2]
-im = ImageOps.exif_transpose(Image.open(SRC)).convert("RGB")
-W, H = im.size  # 3024 x 4032
+im = Image.open(SRC).convert("RGB")
+W, H = im.size                                    # 1536 x 1024
 rgb = np.asarray(im).astype(np.float32) / 255.0
-
-# ---- night grade: cool the shadows toward navy, keep the lamp's warmth ----
 lum = rgb @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
-navy = np.array([0.035, 0.075, 0.135], dtype=np.float32)
-k = (1.0 - np.clip(lum, 0, 1)) ** 3 * 0.42
-graded = rgb * (1 - k[..., None]) + navy * k[..., None]
-graded = graded * np.array([0.965, 0.99, 1.045], dtype=np.float32)   # cooler white balance
-graded = np.clip(graded, 0, 1)
+
 
 def to_img(a, mode="RGB"):
     return Image.fromarray((np.clip(a, 0, 1) * 255 + 0.5).astype(np.uint8), mode)
 
-# ---- skyline mask (full-res coordinates, measured on the photo) ----
-skyline = [(0, 1940), (1483, 1877), (1534, 2052), (1850, 1966), (2000, 1954),
-           (2120, 1988), (2236, 2124), (2250, 2288), (2570, 2288), (2585, 2442),
-           (2800, 2482), (3024, 2432), (3024, H), (0, H)]
-mask_b = Image.new("L", (W, H), 0)
-ImageDraw.Draw(mask_b).polygon(skyline, fill=255)
-mask_b = mask_b.filter(ImageFilter.GaussianBlur(2.2))
 
-# ---- lamp mask: cone head, collar, pole ----
-lamp_poly = [(1309, 2735), (1320, 2725), (1513, 2721), (1524, 2731), (1450, 2822),
-             (1430, 2846), (1430, H), (1391, H), (1392, 2846), (1376, 2823)]
-mask_l = Image.new("L", (W, H), 0)
-ImageDraw.Draw(mask_l).polygon(lamp_poly, fill=255)
-mask_l = mask_l.filter(ImageFilter.GaussianBlur(1.4))
+def poly_mask(points, blur=0.0):
+    m = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(m).polygon(points, fill=255)
+    if blur:
+        m = m.filter(ImageFilter.GaussianBlur(blur))
+    return np.asarray(m).astype(np.float32) / 255.0
 
-# ---- building plate: lamp painted out (inpaint on a dilated lamp mask) ----
-g8 = (graded * 255).astype(np.uint8)
-lm = np.asarray(mask_l)
-inp_mask = cv2.dilate((lm > 8).astype(np.uint8) * 255, np.ones((15, 15), np.uint8))
-bgr = cv2.cvtColor(g8, cv2.COLOR_RGB2BGR)
-clean = cv2.inpaint(bgr, inp_mask, 9, cv2.INPAINT_TELEA)
+
+# ---- what is solidly in front of the sky: glass box, dome, canopy, the near roof
+solid = poly_mask([(0, 222), (65, 268), (150, 268), (152, 220), (742, 219), (748, 365), (770, 364),
+                   (800, 361), (830, 366), (850, 378), (852, 421), (1001, 425), (1003, 432),
+                   (962, 568), (925, 572), (925, H), (0, H)], blur=0.8)
+eave = poly_mask([(0, 0), (44, 0), (44, 32), (28, 58), (0, 64)], blur=0.8)
+street = np.zeros((H, W), np.float32)
+street[770:, :] = 1.0                              # city lights, the bus, the street
+
+# ---- the lamp: cone head, collar, pole
+lamp = poly_mask([(971, 518), (1023, 518), (1016, 543), (1004, 556), (1003, 845), (995, 845),
+                  (994, 556), (979, 543)], blur=0.7)
+
+# ---- building plate: lamp painted out
+bgr = cv2.cvtColor((rgb * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+lamp_hole = cv2.dilate((lamp > 0.02).astype(np.uint8) * 255, np.ones((7, 7), np.uint8))
+clean = cv2.inpaint(bgr, lamp_hole, 6, cv2.INPAINT_TELEA)
 clean = cv2.cvtColor(clean, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+# ---- to the right, trees against the sky: separate them by colour. The sky is
+# deep blue (blue well above red and green); branches, lights and the crane are not.
+excess = (clean[..., 2] - np.maximum(clean[..., 0], clean[..., 1])) * 255.0
+branch = np.clip((42.0 - excess) / 26.0, 0, 1)
+zone = np.zeros((H, W), np.float32)
+zone[140:, 880:] = 1.0
+zone = cv2.GaussianBlur(zone, (0, 0), 6)
+front = np.maximum.reduce([solid, eave, street, branch * zone])
+sky_a = 1.0 - front
 
-# ---- sky plate: denoise the sky into a smooth gradient, fill below the skyline ----
-sky = graded.copy()
-mb = np.asarray(mask_b).astype(np.float32) / 255.0
-# fill everything below the skyline with the colour of the sky just above it, row by row
-fill_row = graded[1800:1860].mean(axis=(0, 1))
-sky = sky * (1 - mb[..., None]) + fill_row * mb[..., None]
-sky_img = to_img(sky).filter(ImageFilter.GaussianBlur(28))
-# a faint luminous haze above the lit facade (light spill), very subtle
-haze = np.zeros((H, W), np.float32)
-yy, xx = np.mgrid[0:H, 0:W]
-haze += np.exp(-(((xx - 700) / 1100.0) ** 2 + ((yy - 1900) / 420.0) ** 2)) * 0.10
-sky_arr = np.asarray(sky_img).astype(np.float32) / 255.0 + haze[..., None] * np.array([0.55, 0.72, 1.0])
-sky_img = to_img(sky_arr)
+# ---- the lamp: cone head, collar, pole
+lamp = poly_mask([(971, 518), (1023, 518), (1016, 543), (1004, 556), (1003, 845), (995, 845),
+                  (994, 556), (979, 543)], blur=0.7)
 
-building = np.dstack([clean, np.asarray(mask_b).astype(np.float32) / 255.0])
-building_img = to_img(building, "RGBA")
-lamp = np.dstack([graded, np.asarray(mask_l).astype(np.float32) / 255.0])
-lamp_img = to_img(lamp, "RGBA")
+building = np.dstack([clean * (front[..., None] > 0.002), front])
 
-# ---- bloom: the brightest parts of the facade, blurred wide ----
-hi = np.clip((lum - 0.55) / 0.45, 0, 1) ** 1.6
-bloom = graded * hi[..., None]
-bloom_img = to_img(bloom).filter(ImageFilter.GaussianBlur(38))
+# ---- sky plate: the sky where it is sky, and a filled-in sky everywhere else
+small = cv2.resize(cv2.cvtColor((clean * 255).astype(np.uint8), cv2.COLOR_RGB2BGR), (W // 4, H // 4), interpolation=cv2.INTER_AREA)
+hole = cv2.resize((front > 0.05).astype(np.uint8) * 255, (W // 4, H // 4), interpolation=cv2.INTER_NEAREST)
+hole = cv2.dilate(hole, np.ones((3, 3), np.uint8))
+filled = cv2.inpaint(small, hole, 9, cv2.INPAINT_TELEA)
+filled = cv2.GaussianBlur(cv2.resize(filled, (W, H), interpolation=cv2.INTER_CUBIC), (0, 0), 6)
+filled = cv2.cvtColor(filled, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+keep = np.clip((0.05 - front) / 0.05, 0, 1)        # only clear sky survives; anything touched by a branch is filled
+keep = cv2.GaussianBlur(keep, (0, 0), 0.8)
+sky = clean * keep[..., None] + filled * (1 - keep[..., None])
 
-# ---- blurred world: the composite, blurred and pushed darker/bluer ----
-comp = to_img(graded)
-blur_img = comp.resize((W // 4, H // 4), Image.LANCZOS).filter(ImageFilter.GaussianBlur(9))
+# ---- bloom: the warm windows, blurred wide
+hi = np.clip((lum - 0.58) / 0.42, 0, 1) ** 1.5
+bloom_img = to_img(rgb * hi[..., None]).filter(ImageFilter.GaussianBlur(26))
+
+# ---- blurred world: the composite, blurred and pushed darker and bluer
+navy = np.array([0.03, 0.06, 0.13], dtype=np.float32)
+blur_img = im.resize((W // 2, H // 2), Image.LANCZOS).filter(ImageFilter.GaussianBlur(14))
 ba = np.asarray(blur_img).astype(np.float32) / 255.0
-ba = ba * 0.62 + navy * 0.38 * (1 - ba.mean(axis=2, keepdims=True))
+ba = ba * 0.58 + navy * 0.42 * (1 - ba.mean(axis=2, keepdims=True))
 blur_img = to_img(ba)
 
+sky_img, building_img = to_img(sky), to_img(building, "RGBA")
+lamp_img = to_img(np.dstack([rgb * (lamp[..., None] > 0.002), lamp]), "RGBA")
+
+
 def export(name, img, box, size, q, alpha=False):
-    c = img.crop(box).resize(size, Image.LANCZOS)
+    c = img.crop(box)
+    if c.size != size:
+        c = c.resize(size, Image.LANCZOS)
     c.save(f"{OUT}/{name}.webp", quality=q, method=6, **({"exact": True} if alpha else {}))
 
-# desktop: landscape crop with the sky band above the cube
-D = (0, 1250, 3024, 3140)          # 3024 x 1890 (1.6:1)
-DS = (2400, 1500)
-# phone: portrait crop
-M = (0, 520, 2268, 4032)           # 2268 x 3512
-MS = (1080, 1672)
-for tag, box, size in (("d", D, DS), ("m", M, MS)):
-    export(f"sky-{tag}", sky_img, box, size, 78)
-    export(f"building-{tag}", building_img, box, size, 84, alpha=True)
-    export(f"lamp-{tag}", lamp_img, box, size, 86, alpha=True)
-    export(f"bloom-{tag}", bloom_img, box, (size[0] // 2, size[1] // 2), 70)
-    bb = (box[0] // 4, box[1] // 4, box[2] // 4, box[3] // 4)
-    export(f"blur-{tag}", blur_img, bb, (size[0] // 2, size[1] // 2), 72)
-    # full composite poster (used as the instant first paint and the reduced-motion still)
-    export(f"poster-{tag}", comp, box, size, 80)
+
+D = (0, 0, W, H)              # desktop: the whole frame (1.5:1)
+M = (300, 0, 960, H)          # phone: the glass box, the dome and the sky above them
+for tag, box in (("d", D), ("m", M)):
+    size = (box[2] - box[0], box[3] - box[1])
+    export(f"sky-{tag}", sky_img, box, size, 82)
+    export(f"building-{tag}", building_img, box, size, 86, alpha=True)
+    export(f"lamp-{tag}", lamp_img, box, size, 88, alpha=True)
+    half = (size[0] // 2, size[1] // 2)
+    export(f"bloom-{tag}", bloom_img, box, half, 72)
+    export(f"blur-{tag}", blur_img, tuple(v // 2 for v in box), half, 74)
+    export(f"poster-{tag}", im, box, size, 84)
 print("ok")

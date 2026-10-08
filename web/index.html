@@ -13,12 +13,12 @@
 <link rel="preload" as="image" href="assets/poster-m.webp" media="(max-width: 760px)" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="scrollcraft.css">
 <link rel="stylesheet" href="site.css">
 <script>document.documentElement.classList.add('js');</script>
 <noscript><style>
-  .js .hoi .l { opacity: 1; }
+  .js .hoi .l, .js .hoi__dot { opacity: 1; transform: none; }
   .desk { opacity: 1 !important; pointer-events: auto !important; }
   .copy, .scrim, .rulebook { display: none; }
 </style></noscript>
@@ -36,18 +36,27 @@
       <span class="mark__note">Independent student project</span>
     </span>
   </a>
-  <nav class="map" aria-label="Where you are on the page">
-    <ol>
-      <li><button class="map__stop" type="button" data-leg="0" aria-current="step"><span class="map__dot" aria-hidden="true"></span><span class="map__label">Hoi</span></button></li>
-      <li><button class="map__stop" type="button" data-leg="1"><span class="map__dot" aria-hidden="true"></span><span class="map__label">The rulebook</span></button></li>
-      <li><button class="map__stop" type="button" data-leg="2"><span class="map__dot" aria-hidden="true"></span><span class="map__label">Ask</span></button></li>
-    </ol>
-  </nav>
   <a class="code" href="https://github.com/Munish702/vu-rag-assistant" target="_blank" rel="noopener" aria-label="View the code on GitHub">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5M9 3 7 13"/></svg>
     <span class="code__label">View the code</span>
   </a>
 </header>
+
+<!-- The scrollbar, redrawn. A scan line down the right edge: the lit square is
+     where you are, the tag beside it names the page, and the three markers jump
+     to each page. Drag anywhere on it to scrub. -->
+<nav class="rail" aria-label="Where you are on the page">
+  <div class="rail__track" aria-hidden="true"><span class="rail__fill"></span></div>
+  <ol class="rail__stops">
+    <li><button class="rail__stop" type="button" data-leg="0" data-name="Hoi" aria-current="step"><span class="sr-only">Hoi</span></button></li>
+    <li><button class="rail__stop" type="button" data-leg="1" data-name="The rulebook"><span class="sr-only">The rulebook</span></button></li>
+    <li><button class="rail__stop" type="button" data-leg="2" data-name="Ask"><span class="sr-only">Ask</span></button></li>
+  </ol>
+  <div class="rail__thumb" aria-hidden="true">
+    <span class="rail__sq"></span>
+    <span class="rail__tag"><span class="rail__chev">&gt;</span><span class="rail__name">Hoi</span><span class="rail__cur"></span></span>
+  </div>
+</nav>
 
 <main id="top" data-sc-mode="worldflight" data-sc-seam="0.16">
 
@@ -71,13 +80,13 @@
       <div class="plane plane--hoi">
         <h1 class="hoi">
           <span class="sr-only">Hoi! Welcome to the AI Study Assistant for the MSc AI at VU Amsterdam.</span>
-          <span class="hoi__word" aria-hidden="true"><span class="l">H</span><span class="l">o</span><span class="l">i</span><span class="hoi__base"></span><span class="hoi__caret"></span></span>
+          <span class="hoi__word" aria-hidden="true"><span class="l">H</span><span class="l">o</span><span class="l l--i">ı<span class="hoi__dot"></span></span><span class="hoi__base"></span></span>
         </h1>
       </div>
       <div class="plane plane--layer plane--building">
         <picture>
           <source media="(max-width: 760px)" srcset="assets/building-m.webp">
-          <img src="assets/building-d.webp" alt="The main building of the Vrije Universiteit Amsterdam at night, its glass facade lit with the words vrije Universiteit" decoding="async">
+          <img src="assets/building-d.webp" alt="The main building of the Vrije Universiteit Amsterdam at blue hour, its glass facade lit with the words Vrije Universiteit" decoding="async">
         </picture>
       </div>
       <div class="plane plane--layer plane--bloom" aria-hidden="true">
@@ -102,6 +111,7 @@
       </div>
       <div class="plane plane--tint" aria-hidden="true"></div>
       <div class="plane plane--grade" aria-hidden="true"></div>
+      <canvas class="plane plane--map" aria-hidden="true"></canvas>
     </div>
 
     <!-- Leg 0: Hoi. The campus itself is the leg. -->
