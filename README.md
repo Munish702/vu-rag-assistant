@@ -6,7 +6,7 @@ Runs **fully locally** on a laptop (no API keys, no data leaves the machine).
 
 > **Headline result:** on a 48-question evaluation set, retrieval Recall@5 went from **0.81 → 0.95** and answers containing the correct key facts from **0.81 → 0.91**, with **zero hallucinated answers on unanswerable questions**.
 
-![Demo: asking the assistant how Deep Learning is graded](assets/demo.gif)
+![Demo: "Hoi" rises over the VU campus at night, the Netherlands lights up as the rulebook collapses into one answer, then the assistant answers how Deep Learning is graded](assets/demo.webp)
 
 **Website:** [munish702.github.io/vu-rag-assistant](https://munish702.github.io/vu-rag-assistant/). A scroll-driven page that shows the idea (the whole rulebook collapses into one plain answer) and ends in the chat. Online it replays real recorded answers; run it on your own computer for live ones (see [Run the website](#run-the-website)).
 
