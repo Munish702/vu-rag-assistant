@@ -183,6 +183,7 @@
     cardFinalY = vh * (phone.matches ? 0.07 : 0.06);
     nlmap.layout();
     layoutRail();
+    frags.forEach(function (f) { f.w = f.el.offsetWidth; f.h = f.el.offsetHeight; });
     kick();
   }
 
@@ -257,6 +258,14 @@
 
     var r = c01((q - 0.2) / 0.42);
     var hush = ramp(q, 0.62, 0.7);
+    // As the map locks onto the VU, the lines over the target and its label
+    // fade and drift aside, so the campus can be seen. The survivor is spared.
+    var fz = nlmap.focus(t), zx0 = 0, zx1 = 0, zy0 = 0, zy1 = 0;
+    if (fz.k > 0.001) {
+      if (phone.matches) { zx0 = 0; zx1 = vw; zy0 = fz.y - 50; zy1 = fz.y + 115; }
+      else { zx0 = fz.x - 70; zx1 = fz.x + 340; zy0 = fz.y - 75; zy1 = fz.y + 75; }
+    }
+    var zcx = (zx0 + zx1) / 2, zcy = (zy0 + zy1) / 2;
     var col = c01((q - 0.7) / 0.16), colE = easeInOut(col);
 
     // Real lines, flown at the reader. u is each line's progress from the far
@@ -275,10 +284,23 @@
         op = ramp(u, 0.02, 0.2) * (1 - ramp(u, 0.84, 0.95));
       }
       op *= (0.55 + 0.45 * Math.min(1, sc)) * (1 - 0.65 * hush) * (1 - colE);
+      var px = f.x * vw * sc, py = f.y * vh * sc;
+      if (fz.k > 0.001 && f.w) {
+        var hw = f.w * sc / 2, hh = f.h * sc / 2, fcx = vw * 0.5 + px, fcy = vh * 0.46 + py;
+        var ovx = Math.min(fcx + hw, zx1) - Math.max(fcx - hw, zx0);
+        var ovy = Math.min(fcy + hh, zy1) - Math.max(fcy - hh, zy0);
+        var ov = Math.min(ovx, ovy);
+        if (ov > -40) {
+          var cl = fz.k * smooth((ov + 40) / 80);
+          op *= 1 - cl;
+          var dx = fcx - zcx, dy = fcy - zcy, dl = Math.sqrt(dx * dx + dy * dy) || 1;
+          if (!reduce) { px += dx / dl * 70 * cl; py += dy / dl * 70 * cl; }
+        }
+      }
       if (op < 0.004) { css(f.el, 'opacity', '0'); css(f.el, 'visibility', 'hidden'); continue; }
       css(f.el, 'visibility', 'visible');
       css(f.el, 'opacity', op.toFixed(3));
-      css(f.el, 'transform', placed(f.x * vw * sc, f.y * vh * sc, sc));
+      css(f.el, 'transform', placed(px, py, sc));
     }
 
     // The survivor. It flies in as one of the lines, freezes with the rest,
@@ -306,139 +328,284 @@
     }
   }
 
-  // ---- the Netherlands ---------------------------------------------------------
-  // Behind the rulebook, the country as a grid of tiny squares. As the reader
-  // scrolls, squares light up in a wave that starts at the VU in Amsterdam and
-  // spreads across the whole country, in step with the scroll. Outline drawn by
-  // hand from the coastline (lon, lat): mainland, Zeeuws-Vlaanderen, the Wadden
-  // islands, with the IJsselmeer and Markermeer cut out as water.
+  // ---- the Netherlands, and the dive to the VU -----------------------------------
+  // Behind the rulebook, the country as a grid of tiny squares. Squares light in
+  // a wave from the VU outward; then, while the rules rush in, the camera dives
+  // from the whole country to the A10 ring and down to the campus on De Boelelaan,
+  // and locks on just as the one rule that answers the question lights up.
+  // The grid is fixed to the screen and the map flows under it, the way a dot
+  // display redraws. Geography comes from two baked layers (src-plates/make_map.py):
+  // Natural Earth 1:10m for the country, and an Amsterdam layer whose A10 runs
+  // through real anchor points (Sloterdijk, Lelylaan, Zuid and RAI stations).
   var nlmap = (function () {
     var cv = campus.querySelector('.plane--map');
     if (!cv || !cv.getContext) return { layout: function () {}, update: function () {} };
     var g = cv.getContext('2d');
-    var LAND = [
-      [[3.45,51.52],[3.52,51.59],[3.70,51.58],[4.00,51.56],[4.15,51.60],[3.95,51.64],[3.70,51.68],[3.80,51.74],[4.00,51.72],[4.10,51.75],[3.90,51.80],[3.85,51.83],[4.05,51.86],[4.12,51.98],[4.27,52.10],[4.42,52.25],[4.56,52.46],[4.62,52.62],[4.66,52.77],[4.72,52.93],[4.78,52.96],[5.04,52.94],[5.20,53.02],[5.39,53.08],[5.41,53.17],[5.55,53.27],[5.90,53.38],[6.20,53.41],[6.45,53.43],[6.70,53.46],[6.85,53.44],[6.93,53.33],[7.05,53.30],[7.20,53.24],[7.21,53.18],[7.07,53.00],[7.05,52.85],[7.07,52.64],[6.75,52.64],[6.70,52.49],[7.03,52.40],[7.06,52.23],[6.83,52.11],[6.69,52.03],[6.83,51.97],[6.40,51.84],[6.17,51.85],[5.95,51.81],[5.97,51.73],[6.21,51.51],[6.07,51.20],[5.90,51.05],[6.08,50.92],[6.02,50.76],[5.70,50.76],[5.64,50.85],[5.77,51.03],[5.85,51.15],[5.53,51.27],[5.24,51.26],[5.08,51.47],[4.85,51.46],[4.75,51.50],[4.55,51.43],[4.40,51.36],[4.24,51.37],[4.05,51.42],[3.80,51.44],[3.60,51.44]],
-      [[3.37,51.37],[3.55,51.41],[3.75,51.35],[3.95,51.40],[4.20,51.36],[4.24,51.33],[3.95,51.21],[3.70,51.23],[3.50,51.25]],
-      [[4.70,53.00],[4.75,52.99],[4.90,53.08],[4.88,53.18],[4.83,53.18],[4.72,53.10]],
-      [[4.92,53.23],[5.10,53.30],[5.12,53.28],[4.96,53.22]],
-      [[5.18,53.36],[5.30,53.39],[5.55,53.45],[5.60,53.44],[5.40,53.38],[5.20,53.35]],
-      [[5.62,53.44],[5.75,53.47],[5.92,53.46],[5.92,53.43],[5.70,53.43]],
-      [[6.10,53.48],[6.25,53.50],[6.33,53.49],[6.25,53.46],[6.12,53.46]]
-    ];
-    var WATER = [[[5.04,52.94],[5.20,53.00],[5.39,53.05],[5.40,52.99],[5.36,52.88],[5.47,52.85],[5.62,52.80],[5.60,52.68],[5.50,52.60],[5.43,52.53],[5.30,52.47],[5.17,52.38],[5.04,52.38],[5.00,52.43],[5.07,52.52],[5.05,52.62],[5.10,52.66],[5.25,52.70],[5.25,52.74],[5.12,52.77],[5.06,52.84]]];
-    var ORIGIN = [4.865, 52.334];                     // VU Amsterdam
-    var CITIES = [[4.90, 52.37], [4.48, 51.92], [4.30, 52.08], [5.12, 52.09], [5.47, 51.44],
-                  [6.57, 53.22], [5.91, 51.98], [5.85, 51.84], [5.69, 50.85], [6.89, 52.22], [4.64, 52.39]];
-    var LON0 = 3.3, LON1 = 7.3, LAT0 = 50.7, LAT1 = 53.56, K = Math.cos(52.2 * Math.PI / 180);
+    var K = Math.cos(52.2 * Math.PI / 180);
+    var VU = [4.8657, 52.3341];                       // De Boelelaan 1105
+    var MAXD = 1.7267;                                // farthest Dutch land from the VU, in degrees
+    var LON0 = 3.3, LON1 = 7.3, LAT0 = 50.7, LAT1 = 53.56;   // the country's frame before the dive
     var ASPECT = ((LON1 - LON0) * K) / (LAT1 - LAT0);
-
-    function inside(x, y, ring) {
-      var hit = false;
-      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-        var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
-        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) hit = !hit;
+    var FINAL_SPAN = 0.05;                            // latitude on screen at the end: about 5.5 km
+    // classes: 0 sea, 1 land, 2 built-up, 3 water, 4 motorway, 5 the campus
+    var UNLIT = [0, 0.28, 0.34, 0, 0.4, 0.5];
+    var LAYERS = [
+      { src: 'assets/map-ams.png', b: [4.62, 52.22, 5.14, 52.50] },     // the finer layer wins
+      { src: 'assets/map-nl.png',  b: [3.2, 50.6, 7.4, 53.7] }
+    ];
+    var loaded = 0;
+    LAYERS.forEach(function (L) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        var x = c.getContext('2d');
+        x.drawImage(img, 0, 0);
+        var px = x.getImageData(0, 0, c.width, c.height).data;
+        var d = new Uint8Array(c.width * c.height);
+        for (var i = 0; i < d.length; i++) d[i] = Math.round(px[i * 4] / 40);
+        L.w = c.width; L.h = c.height; L.data = d;
+        if (++loaded === LAYERS.length && tNow >= 0) draw(performance.now());
+      };
+      img.src = L.src;
+    });
+    function cls(lon, lat) {
+      for (var i = 0; i < LAYERS.length; i++) {
+        var L = LAYERS[i], b = L.b;
+        if (!L.data || lon < b[0] || lon >= b[2] || lat < b[1] || lat >= b[3]) continue;
+        return L.data[(((b[3] - lat) / (b[3] - b[1]) * L.h) | 0) * L.w + (((lon - b[0]) / (b[2] - b[0]) * L.w) | 0)];
       }
-      return hit;
+      return 0;
     }
-    function isLand(lon, lat) {
-      for (var w = 0; w < WATER.length; w++) if (inside(lon, lat, WATER[w])) return false;
-      for (var l = 0; l < LAND.length; l++) if (inside(lon, lat, LAND[l])) return true;
-      return false;
-    }
-    var seed = 52;
-    function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
 
-    var cells = [], sea = [], box = null, pitch = 7, sq = 2.4, dpr = 1, tNow = -1, raf = 0, W0 = 0;
+    var cols = 0, rows = 0, pitch = 7, sq = 2.4, dpr = 1, ox = 0, oy = 0, W0 = 0;
+    var s0 = 1, s1 = 1, p0x = 0, p0y = 0, p1x = 0, p1y = 0, gutter = 24;
+    var noise = null, phase = null, tNow = -1, raf = 0;
+
+    function hash(i) { i = Math.imul(i ^ 0x9e3779b9, 0x85ebca6b); i ^= i >>> 13; i = Math.imul(i, 0xc2b2ae35); return ((i ^ (i >>> 16)) >>> 0) / 4294967296; }
 
     function layoutMap() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
       W0 = vw;
-      // the country fills most of the height on a desktop, most of the width on a phone
       var mh = phone.matches ? Math.min(vh * 0.62, (vw * 0.94) / ASPECT) : vh * 0.84;
       var mw = mh * ASPECT;
-      box = { x: (vw - mw) / 2, y: (vh - mh) / 2 + vh * 0.03, w: mw, h: mh };
+      var bx = (vw - mw) / 2, by = (vh - mh) / 2 + vh * 0.03;
+      s0 = mh / (LAT1 - LAT0);
+      p0x = bx + (VU[0] - LON0) * K * s0;
+      p0y = by + (LAT1 - VU[1]) * s0;
+      s1 = vh / FINAL_SPAN;
+      p1x = vw * (phone.matches ? 0.5 : 0.36);
+      p1y = vh * (phone.matches ? 0.66 : 0.6);
       pitch = Math.max(4.5, mh / 112);
       sq = Math.max(1.5, pitch * 0.36);
-      cells = []; sea = []; seed = 52;
-      var cols = Math.floor(mw / pitch), rows = Math.floor(mh / pitch);
-      var maxD = 0;
-      for (var r = 0; r < rows; r++) {
-        for (var c = 0; c < cols; c++) {
-          var lon = LON0 + (c + 0.5) / cols * (LON1 - LON0);
-          var lat = LAT1 - (r + 0.5) / rows * (LAT1 - LAT0);
-          var x = box.x + (c + 0.5) * pitch, y = box.y + (r + 0.5) * pitch;
-          var n = rnd();
-          if (!isLand(lon, lat)) { if (n < 0.16) sea.push({ x: x, y: y }); continue; }
-          var d = Math.hypot((lon - ORIGIN[0]) * K, lat - ORIGIN[1]);
-          var city = 0;
-          for (var k = 0; k < CITIES.length; k++) {
-            var dc = Math.hypot((lon - CITIES[k][0]) * K, lat - CITIES[k][1]);
-            if (dc < 0.07) city = Math.max(city, 1 - dc / 0.07);
-          }
-          maxD = Math.max(maxD, d);
-          cells.push({ x: x, y: y, d: d, n: n, city: city, ph: rnd() * 6.283 });
-        }
-      }
-      // when each square lights: mostly by distance from the VU, a little at random
-      cells.forEach(function (cl) { cl.at = 0.82 * (cl.d / maxD) + 0.16 * cl.n; });
+      gutter = Math.max(20, Math.min(56, vw * 0.04));
+      ox = ((bx + pitch / 2) % pitch + pitch) % pitch;
+      oy = ((by + pitch / 2) % pitch + pitch) % pitch;
+      cols = Math.ceil((vw - ox) / pitch) + 1; rows = Math.ceil((vh - oy) / pitch) + 1;
+      noise = new Float32Array(cols * rows); phase = new Float32Array(cols * rows);
+      for (var i = 0; i < noise.length; i++) { noise[i] = hash(i * 2 + 1); phase[i] = hash(i * 2 + 7) * 6.283; }
       draw(performance.now());
     }
 
     function bump(x) { return x > 0 && x < 1.6 ? Math.sin(x / 1.6 * Math.PI) : 0; }
 
+    // where the camera is: the VU's place on screen, and pixels per degree of latitude
+    function camera(q) {
+      var zq = c01((q - 0.28) / 0.34);
+      if (reduce) zq = q < 0.5 ? 0 : 1;            // a cut, not a flight
+      var z = reduce ? zq : easeInOut(zq);
+      var m = reduce ? zq : smooth(c01((q - 0.28) / 0.3));
+      return { z: z, s: Math.exp(lerp(Math.log(s0), Math.log(s1), z)), x: lerp(p0x, p1x, m), y: lerp(p0y, p1y, m) };
+    }
+
+    // rects collected per bucket, then filled once per bucket
+    var NB = 24, bucketsB = [], bucketsW = [], halos = [];
+    for (var bi = 0; bi < NB; bi++) { bucketsB.push([]); bucketsW.push([]); halos.push([]); }
+    function fillBuckets(list, rgb, scale) {
+      for (var b = 0; b < NB; b++) {
+        var L = list[b]; if (!L.length) continue;
+        g.fillStyle = 'rgba(' + rgb + ',' + Math.min(1, (b + 0.5) / NB * scale).toFixed(3) + ')';
+        g.beginPath();
+        for (var i = 0; i < L.length; i += 3) g.rect(L[i], L[i + 1], L[i + 2], L[i + 2]);
+        g.fill();
+        L.length = 0;
+      }
+    }
+
     function draw(now) {
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, cv.width, cv.height);
-      if (tNow < 0 || !box) return 0;
+      if (tNow < 0 || !noise || loaded < LAYERS.length) return 0;
       var q = (tNow - C[1]) / W[1];
       var level = smooth((q + 0.03) / 0.06)                     // appears as the rulebook begins
                 * (1 - 0.5 * ramp(q, 0.62, 0.7))                 // the hush belongs to one light
                 * (1 - 0.3 * ramp(q, 0.7, 0.9));                 // quiet behind the answer and the desk
+      var levelV = smooth((q + 0.03) / 0.06) * (1 - 0.3 * ramp(q, 0.7, 0.9));   // the campus doesn't hush
+      if (reduce) { var dip = Math.min(1, Math.abs(q - 0.5) / 0.05); level *= dip; levelV *= dip; }
       if (level < 0.005) return 0;
-      var wave = c01((q - 0.0) / 0.58) * 1.1;                   // the whole country lit by the end of the rush
+      var wave = c01(q / 0.34) * 1.1;                           // the whole country lit before the dive
       var time = settled ? 0 : now / 1000;
-      var grow = reduce ? 1 : 1 + 0.05 * smooth((q - 0.2) / 0.5);
-      var cx = box.x + box.w / 2, cy = box.y + box.h / 2;
-      g.setTransform(dpr * grow, 0, 0, dpr * grow, dpr * cx * (1 - grow), dpr * cy * (1 - grow));
-      var h = sq / 2, i, cl;
+      var cam = camera(q), s = cam.s, sK = s * K, z = cam.z;
+      var dens = 1 - 0.6 * z;                                   // a full screen of land needs fewer lights
+      var focusR = Math.max(vw, vh) * 0.55, K2 = K * K, dLat, dLon;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      var unlit = [[], [], [], [], [], []], sea = [];
+      var h = sq / 2;
+      for (var r = 0; r < rows; r++) {
+        var sy = oy + r * pitch, lat = VU[1] - (sy - cam.y) / s;
+        for (var c = 0; c < cols; c++) {
+          var sx = ox + c * pitch, lon = VU[0] + (sx - cam.x) / sK;
+          var k = cls(lon, lat), idx = r * cols + c, n = noise[idx];
+          if (k === 0 || k === 3) { if (n < 0.16) sea.push(sx, sy); continue; }
+          unlit[k].push(sx - h, sy - h);
+
+          dLon = lon - VU[0]; dLat = lat - VU[1];
+          var d = Math.sqrt(dLon * dLon * K2 + dLat * dLat) / MAXD;
+          var x = (wave - (0.82 * d + 0.16 * n)) / 0.03;
+          if (x <= 0) continue;
+          if (k < 3 && n < 0.5 * z) continue;                    // close in, the city thins to scattered lights
+          var on = smooth(x), flare = bump(x);
+          var flick = reduce ? 1 : 0.8 + 0.2 * Math.sin(time * (1.3 + n * 2.4) + phase[idx]);
+          var inten, white = flare > 0.5, grow = 0;
+          if (k === 1) inten = (0.55 + 0.31 * n) * dens;
+          else if (k === 2) { inten = (0.72 + 0.28 * n) * dens; white = white || n > 0.8; grow = 0.2; }
+          else if (k === 4) {                                    // motorways carry pulses toward the VU
+            inten = 0.75 + 0.25 * Math.sin(time * 2.4 + d * MAXD * 111 * 0.9);
+            white = true; grow = 0.25 + 0.2 * z;
+          } else { inten = 0.85 + 0.15 * Math.sin(time * 3.2); white = true; grow = 0.45; }
+          if (z > 0.01) {                                        // close in, the edges fall away
+            var fdx = sx - cam.x, fdy = sy - cam.y, fd = Math.sqrt(fdx * fdx + fdy * fdy) / focusR;
+            inten *= 1 - 0.55 * z * smooth(fd);
+          }
+          var a = (k === 5 ? levelV : level) * on * flick * inten;
+          var sz = sq * (1 + 0.9 * flare + grow);
+          var bkt = Math.min(NB - 1, (a * NB) | 0);
+          (white ? bucketsW : bucketsB)[bkt].push(sx - sz / 2, sy - sz / 2, sz);
+          if (flare > 0.02 || k === 5 || (k === 4 && z > 0.4)) {
+            var ha = 0.22 * (k === 5 ? levelV : level) * Math.max(flare, k === 5 ? 0.8 : k === 4 ? 0.35 * z : 0);
+            var hs = sz * 3.2;
+            halos[Math.min(NB - 1, ((ha / 0.3) * NB) | 0)].push(sx - hs / 2, sy - hs / 2, hs);
+          }
+        }
+      }
 
       // the sea and the unlit country: a faint digital grid
       g.fillStyle = 'rgba(127,184,240,' + (0.06 * level).toFixed(3) + ')';
-      for (i = 0; i < sea.length; i++) g.fillRect(sea[i].x - h * 0.7, sea[i].y - h * 0.7, sq * 0.7, sq * 0.7);
-      g.fillStyle = 'rgba(127,184,240,' + (0.28 * level).toFixed(3) + ')';
-      for (i = 0; i < cells.length; i++) { cl = cells[i]; g.fillRect(cl.x - h, cl.y - h, sq, sq); }
+      g.beginPath();
+      for (var i = 0; i < sea.length; i += 2) g.rect(sea[i] - h * 0.7, sea[i + 1] - h * 0.7, sq * 0.7, sq * 0.7);
+      g.fill();
+      for (var kk = 1; kk < 6; kk++) {
+        var U = unlit[kk]; if (!U.length) continue;
+        g.fillStyle = 'rgba(127,184,240,' + (UNLIT[kk] * level * (kk < 3 ? 1 - 0.55 * z : 1)).toFixed(3) + ')';
+        g.beginPath();
+        for (var j = 0; j < U.length; j += 2) g.rect(U[j], U[j + 1], sq, sq);
+        g.fill();
+      }
 
       // the lit squares
       g.globalCompositeOperation = 'lighter';
-      for (i = 0; i < cells.length; i++) {
-        cl = cells[i];
-        var x = (wave - cl.at) / 0.03;
-        if (x <= 0) continue;
-        var on = smooth(x), flare = bump(x);
-        var flick = reduce ? 1 : 0.8 + 0.2 * Math.sin(time * (1.3 + cl.n * 2.4) + cl.ph);
-        var a = level * on * flick * (0.55 + 0.45 * Math.max(cl.city, cl.n * 0.7));
-        var s = sq * (1 + 0.9 * flare + 0.5 * cl.city);
-        if (flare > 0.02 || cl.city > 0.3) {            // a soft square halo while it catches, and on the cities
-          g.fillStyle = 'rgba(127,184,240,' + (0.22 * level * Math.max(flare, cl.city * 0.6)).toFixed(3) + ')';
-          g.fillRect(cl.x - s * 1.6, cl.y - s * 1.6, s * 3.2, s * 3.2);
-        }
-        g.fillStyle = cl.city > 0.5 || flare > 0.5 ? 'rgba(225,240,255,' + Math.min(1, a).toFixed(3) + ')'
-                                                    : 'rgba(127,184,240,' + Math.min(1, a).toFixed(3) + ')';
-        g.fillRect(cl.x - s / 2, cl.y - s / 2, s, s);
-      }
+      fillBuckets(halos, '127,184,240', 0.3);
+      fillBuckets(bucketsB, '127,184,240', 1);
+      fillBuckets(bucketsW, '225,240,255', 1);
       g.globalCompositeOperation = 'source-over';
+
+      hud(q, cam, level, time);
       return level;
     }
 
+    // ---- the lock-on, and a scale bar while descending ----
+    var LABEL = ['VU AMSTERDAM', 'DE BOELELAAN 1105', '52.334° N  4.866° E'];
+    var NICE = [200, 100, 50, 20, 10, 5, 2, 1, 0.5, 0.2];
+    function hud(q, cam, level, time) {
+      var mono = '"JetBrains Mono", ui-monospace, Menlo, monospace';
+      var lk = reduce ? ramp(q, 0.5, 0.56) : smooth(c01((q - 0.55) / 0.09));
+      var vis = lk * (1 - ramp(q, 0.74, 0.84));
+      if (vis > 0.01) {
+        var vx = cam.x, vy = cam.y, small = phone.matches;
+        var hs = lerp(small ? 90 : 130, small ? 20 : 26, lk), arm = 9;
+        g.strokeStyle = 'rgba(127,184,240,' + (0.95 * vis).toFixed(3) + ')';
+        g.lineWidth = 2;
+        g.beginPath();
+        [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (s) {
+          var cx = vx + s[0] * hs, cy = vy + s[1] * hs;
+          g.moveTo(cx - s[0] * arm, cy); g.lineTo(cx, cy); g.lineTo(cx, cy - s[1] * arm);
+        });
+        g.stroke();
+        if (!settled && !reduce && lk > 0.98) {            // a ping from the campus
+          var ph = (time * 0.8) % 1;
+          g.strokeStyle = 'rgba(127,184,240,' + (0.5 * (1 - ph) * vis).toFixed(3) + ')';
+          g.lineWidth = 1;
+          g.strokeRect(vx - hs * (0.4 + ph), vy - hs * (0.4 + ph), hs * 2 * (0.4 + ph), hs * 2 * (0.4 + ph));
+        }
+        var lab = ramp(q, 0.6, 0.67) * (1 - ramp(q, 0.72, 0.8));
+        if (lab > 0.01) {
+          var total = LABEL.join('').length, shown = Math.round(lab * total * 1.0), used = 0;
+          g.font = '500 ' + (small ? 10 : 11) + 'px ' + mono;
+          g.textBaseline = 'middle';
+          var lx = small ? gutter : vx + hs + 22, ly = small ? vy + hs + 30 : vy - 16;   // phone: clear of the scrollbar tag
+          var tw = 0;
+          for (var m = 0; m < LABEL.length; m++) tw = Math.max(tw, g.measureText(LABEL[m]).width);
+          var plx = lx - 10, ply = ly - 15, plw = tw + 20, plh = 16 * (LABEL.length - 1) + 30;
+          g.fillStyle = 'rgba(5,10,18,' + (0.84 * lab).toFixed(3) + ')';
+          g.fillRect(plx, ply, plw, plh);
+          g.strokeStyle = 'rgba(127,184,240,' + (0.9 * lab).toFixed(3) + ')';
+          g.lineWidth = 1;
+          g.beginPath();
+          g.moveTo(plx, ply + 7); g.lineTo(plx, ply); g.lineTo(plx + 7, ply);
+          g.moveTo(plx + plw - 7, ply + plh); g.lineTo(plx + plw, ply + plh); g.lineTo(plx + plw, ply + plh - 7);
+          g.stroke();
+          g.strokeStyle = 'rgba(127,184,240,' + (0.6 * lab).toFixed(3) + ')';
+          g.lineWidth = 1;
+          g.beginPath();
+          if (small) { g.moveTo(vx, vy + hs); g.lineTo(vx, ply); }
+          else { g.moveTo(vx + hs, vy - hs * 0.6); g.lineTo(plx, ply + 9); }
+          g.stroke();
+          for (var i = 0; i < LABEL.length; i++) {
+            var line = LABEL[i], n = Math.max(0, Math.min(line.length, shown - used)); used += line.length;
+            if (!n) break;
+            g.fillStyle = i === 0 ? 'rgba(232,242,253,' + lab.toFixed(3) + ')' : 'rgba(127,184,240,' + lab.toFixed(3) + ')';
+            g.fillText(line.slice(0, n), lx, ly + i * 16);
+          }
+        }
+      }
+      // scale bar: real distance at the current zoom
+      var sb = ramp(q, 0.26, 0.32) * (1 - ramp(q, 0.66, 0.74)) * Math.min(1, level * 1.5);
+      if (sb > 0.01 && !phone.matches) {
+        var pxKm = cam.s / 111.32, km = NICE[NICE.length - 1];
+        for (var j = 0; j < NICE.length; j++) { if (NICE[j] * pxKm <= 150) { km = NICE[j]; break; } }
+        var L = km * pxKm, bx = gutter, by = vh - 42;
+        g.strokeStyle = 'rgba(127,184,240,' + (0.8 * sb).toFixed(3) + ')';
+        g.lineWidth = 1;
+        g.beginPath();
+        g.moveTo(bx, by - 5); g.lineTo(bx, by); g.lineTo(bx + L, by); g.lineTo(bx + L, by - 5);
+        g.stroke();
+        g.font = '500 11px ' + mono;
+        g.textBaseline = 'alphabetic';
+        g.fillStyle = 'rgba(200,222,245,' + (0.9 * sb).toFixed(3) + ')';
+        g.fillText(km >= 1 ? km + ' KM' : Math.round(km * 1000) + ' M', bx, by - 10);
+      }
+    }
+
+    var lastT = -1, lastDraw = 0;
     function loop(now) {
       raf = 0;
+      if (tNow === lastT && now - lastDraw < 30) { raf = requestAnimationFrame(loop); return; }   // idle: half rate
+      lastT = tNow; lastDraw = now;
       var level = draw(now);
       if (level > 0.005 && !settled) raf = requestAnimationFrame(loop);
     }
 
     return {
       layout: layoutMap,
+      focus: function (t) {
+        var q = (t - C[1]) / W[1];
+        if (!W0 || q < 0.45 || q > 0.95) return { x: 0, y: 0, k: 0 };
+        var cam = camera(q);
+        var k = (reduce ? ramp(q, 0.5, 0.56) : smooth(c01((q - 0.52) / 0.08))) * (1 - ramp(q, 0.8, 0.9));
+        return { x: cam.x, y: cam.y, k: k };
+      },
       update: function (t) {
         tNow = t;
         if (!W0) return;

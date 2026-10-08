@@ -136,6 +136,7 @@ src/
 └── app.py                  # the earlier Streamlit interface
 web/                        # the website (static: HTML, CSS, JS, photo planes)
 tools/make_plates.py        # how the night photo was cut into depth planes
+tools/make_map.py           # bakes the dot-matrix map layers (Netherlands + Amsterdam)
 data/
 ├── raw/manifest.csv        # which documents to download (PDFs not included)
 └── eval/questions.jsonl    # 48-question evaluation set
@@ -187,4 +188,4 @@ Python · pdfplumber · sentence-transformers · ChromaDB · BM25 (from scratch)
 ---
 
 *Built by Munishwar Pradhan, MSc AI student at VU Amsterdam.* <!-- TODO: add LinkedIn / contact -->
-Website photo: the VU main building at night, taken by the author. Streamlit app background: "Amsterdam VU" by Rokus Cornelis, CC BY 3.0, via Wikimedia Commons (modified: faded and blurred).
+Website photo: the VU main building at night, taken by the author. Map: [Natural Earth](https://www.naturalearthdata.com/) 1:10m (public domain); the A10 ring is drawn through station coordinates from Wikipedia. Streamlit app background: "Amsterdam VU" by Rokus Cornelis, CC BY 3.0, via Wikimedia Commons (modified: faded and blurred).
