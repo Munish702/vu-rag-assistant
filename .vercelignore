@@ -1,0 +1,6 @@
+# The website is the static folder web/. The Python assistant (src/, its
+# dependencies, data and experiments) runs on your own computer and never
+# needs to reach Vercel, so only web/ and this config are uploaded.
+/*
+!/web
+!/vercel.json
